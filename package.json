@@ -1,0 +1,24 @@
+{
+  "name": "goalsetter-plus",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "echo Use npm run dev:backend or npm run dev:frontend",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akallam04/goalsetter-plus.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/akallam04/goalsetter-plus/issues"
+  },
+  "homepage": "https://github.com/akallam04/goalsetter-plus#readme",
+  "private": true
+}
