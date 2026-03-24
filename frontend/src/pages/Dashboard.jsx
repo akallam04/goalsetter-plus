@@ -76,6 +76,9 @@ export default function Dashboard() {
   const [shareLoading, setShareLoading] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
 
+  // Tab navigation
+  const [activeTab, setActiveTab] = useState('goals')
+
   // Ref for keyboard shortcut N → focus title input
   const titleInputRef = useRef(null)
 
@@ -417,117 +420,220 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Main 2-column: [Left: Add Goal + Filter] | [Right: Charts] ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 16 }} className="main-grid">
+        {/* ── Tab bar ── */}
+        <div className="tab-bar">
+          {[
+            { id: 'goals',     label: '🎯  Goals' },
+            { id: 'analytics', label: '📊  Analytics' },
+            { id: 'ai',        label: '✦  AI Suggest' },
+            { id: 'share',     label: '🔗  Share' },
+          ].map(({ id, label }) => (
+            <button
+              key={id}
+              className={`tab-btn${activeTab === id ? ' active' : ''}`}
+              onClick={() => setActiveTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-          {/* LEFT: Add Goal + Filter & Sort stacked */}
-          <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
+        {/* ── Goals tab ── */}
+        {activeTab === 'goals' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: 16, alignItems: 'start' }} className="main-grid">
 
-            {/* Add Goal */}
-            <div className="card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 14 }}>
-                <div className="section-title">Add a Goal</div>
-                <div style={{ color: 'var(--muted2)', fontSize: 12 }}>Clear, specific, achievable</div>
-              </div>
-              <form onSubmit={addGoal} style={{ display: 'grid', gap: 12 }}>
-                <div>
-                  <label className="label">What do you want to achieve?</label>
-                  <input
-                    ref={titleInputRef}
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., Ship my portfolio project by end of month"
-                  />
+            {/* LEFT: Add Goal + Filter & Sort */}
+            <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
+
+              <div className="card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 14 }}>
+                  <div className="section-title">Add a Goal</div>
+                  <div style={{ color: 'var(--muted2)', fontSize: 12 }}>Clear, specific, achievable</div>
                 </div>
-                <div className="form-grid-3">
+                <form onSubmit={addGoal} style={{ display: 'grid', gap: 12 }}>
                   <div>
-                    <label className="label">Category</label>
-                    <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g., Career" />
-                  </div>
-                  <div>
-                    <label className="label">Priority</label>
-                    <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label">Due Date</label>
-                    <input type="date" value={dueDate} onChange={(e) => { setDueDate(e.target.value); setNlDate(''); setNlParsed(null) }} />
+                    <label className="label">What do you want to achieve?</label>
                     <input
-                      value={nlDate}
-                      onChange={(e) => handleNlDate(e.target.value)}
-                      placeholder='or type "next Friday"'
-                      style={{ marginTop: 6, fontSize: 12, padding: '7px 10px' }}
+                      ref={titleInputRef}
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g., Ship my portfolio project by end of month"
                     />
-                    {nlDate && (
-                      <div style={{ fontSize: 11, marginTop: 4, color: nlParsed ? '#6ee7b7' : '#fca5a5' }}>
-                        {nlParsed ? `→ ${nlParsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Couldn\'t parse date'}
-                      </div>
-                    )}
+                  </div>
+                  <div className="form-grid-3">
+                    <div>
+                      <label className="label">Category</label>
+                      <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g., Career" />
+                    </div>
+                    <div>
+                      <label className="label">Priority</label>
+                      <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Due Date</label>
+                      <input type="date" value={dueDate} onChange={(e) => { setDueDate(e.target.value); setNlDate(''); setNlParsed(null) }} />
+                      <input
+                        value={nlDate}
+                        onChange={(e) => handleNlDate(e.target.value)}
+                        placeholder='or type "next Friday"'
+                        style={{ marginTop: 6, fontSize: 12, padding: '7px 10px' }}
+                      />
+                      {nlDate && (
+                        <div style={{ fontSize: 11, marginTop: 4, color: nlParsed ? '#6ee7b7' : '#fca5a5' }}>
+                          {nlParsed ? `→ ${nlParsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : "Couldn't parse date"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    {error ? <div style={{ color: '#fca5a5', fontSize: 13 }}>{error}</div> : <div />}
+                    <button type="submit" className="btn-primary" style={{ padding: '11px 28px', fontWeight: 700, fontSize: 15 }} disabled={createStatus === 'loading'}>
+                      {createStatus === 'loading' ? 'Adding…' : '+ Add Goal'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div className="card" style={{ display: 'grid', gap: 14, alignContent: 'start' }}>
+                <div className="section-title">Filter &amp; Sort</div>
+                <div>
+                  <label className="label">Status</label>
+                  <div className="filter-group">
+                    {['all', 'active', 'completed'].map((f) => (
+                      <button key={f} className={`filter-btn${filter === f ? ' active' : ''}`} onClick={() => dispatch(setFilter(f))} style={{ textTransform: 'capitalize' }}>
+                        {f}
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                  {error ? <div style={{ color: '#fca5a5', fontSize: 13 }}>{error}</div> : <div />}
-                  <button type="submit" className="btn-primary" style={{ padding: '11px 28px', fontWeight: 700, fontSize: 15 }} disabled={createStatus === 'loading'}>
-                    {createStatus === 'loading' ? 'Adding…' : '+ Add Goal'}
-                  </button>
+                <div>
+                  <label className="label">Search</label>
+                  <div className="search-wrap">
+                    <span className="search-icon">⌕</span>
+                    <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title…" />
+                  </div>
                 </div>
-              </form>
+                <div>
+                  <label className="label">Sort by</label>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="dueSoon">Due date (soonest)</option>
+                    <option value="priorityHigh">Priority (high → low)</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            {/* Filter & Sort */}
-            <div className="card" style={{ display: 'grid', gap: 14, alignContent: 'start' }}>
-              <div className="section-title">Filter &amp; Sort</div>
-              <div>
-                <label className="label">Status</label>
-                <div className="filter-group">
-                  {['all', 'active', 'completed'].map((f) => (
-                    <button key={f} className={`filter-btn${filter === f ? ' active' : ''}`} onClick={() => dispatch(setFilter(f))} style={{ textTransform: 'capitalize' }}>
-                      {f}
-                    </button>
-                  ))}
+            {/* RIGHT: Goals list */}
+            <div className="card" style={{ alignSelf: 'start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div className="section-title">
+                  Your Goals
+                  {visibleGoals.length > 0 && (
+                    <span style={{ color: 'var(--muted2)', fontWeight: 400, fontSize: 14, marginLeft: 8 }}>
+                      ({visibleGoals.length})
+                    </span>
+                  )}
                 </div>
+                {listStatus === 'loading' && (
+                  <div style={{ color: 'var(--muted2)', fontSize: 13 }}>Loading…</div>
+                )}
               </div>
-              <div>
-                <label className="label">Search</label>
-                <div className="search-wrap">
-                  <span className="search-icon">⌕</span>
-                  <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title…" />
-                </div>
-              </div>
-              <div>
-                <label className="label">Sort by</label>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                  <option value="dueSoon">Due date (soonest)</option>
-                  <option value="priorityHigh">Priority (high → low)</option>
-                </select>
+
+              <div style={{ display: 'grid', gap: 10 }}>
+                {visibleGoals.map((g) => (
+                  <div
+                    key={g._id}
+                    className={['goal-card', `priority-${g.priority}`, g.status === 'completed' ? 'completed' : '', 'fade-in'].filter(Boolean).join(' ')}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="goal-title">{g.title}</div>
+                      {g.description && (
+                        <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4, lineHeight: 1.5 }}>{g.description}</div>
+                      )}
+                      <div className="goal-meta">
+                        <span className={`badge badge-${g.priority}`}>{g.priority}</span>
+                        <span className="badge badge-default">{g.category}</span>
+                        {g.dueDate && (
+                          <span className={`badge ${isOverdue(g) ? 'badge-overdue' : 'badge-default'}`}>
+                            {isOverdue(g) ? '⚠ ' : ''}{formatDate(g.dueDate)}
+                          </span>
+                        )}
+                        <span className={`badge badge-${g.status}`}>
+                          {g.status === 'completed' ? '✓ done' : 'active'}
+                        </span>
+                        {(() => {
+                          const d = daysUntilDue(g)
+                          if (d === null || d < 0) return null
+                          if (d === 0) return <span className="badge badge-overdue">Due today</span>
+                          if (d <= 7) return <span className="badge badge-medium">in {d}d</span>
+                          return null
+                        })()}
+                      </div>
+                    </div>
+
+                    <div className="goal-actions">
+                      {confirmDelete === g._id ? (
+                        <>
+                          <span style={{ fontSize: 12, color: 'var(--muted)', alignSelf: 'center' }}>Delete?</span>
+                          <button className="btn-danger" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => handleDelete(g._id)}>Yes</button>
+                          <button style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => setConfirmDelete(null)}>Cancel</button>
+                        </>
+                      ) : (
+                        <>
+                          <button style={{ padding: '7px 12px', fontSize: 12 }} onClick={() => openEdit(g)}>Edit</button>
+                          <button className={g.status === 'active' ? 'btn-success' : ''} style={{ padding: '7px 12px', fontSize: 12 }} onClick={() => handleToggle(g)}>
+                            {g.status === 'active' ? '✓ Done' : '↩ Reopen'}
+                          </button>
+                          <button style={{ padding: '7px 10px', fontSize: 12 }} onClick={() => setConfirmDelete(g._id)} title="Delete goal">✕</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {listStatus === 'succeeded' && visibleGoals.length === 0 && (
+                  <div className="empty-state">
+                    <div className="empty-icon">🎯</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
+                      {filter === 'all' && !search.trim() ? 'No goals yet' : 'No matching goals'}
+                    </div>
+                    <div style={{ fontSize: 14 }}>
+                      {filter === 'all' && !search.trim()
+                        ? 'Add your first goal above to get started.'
+                        : 'Try adjusting your filters or search.'}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
+        )}
 
-          {/* RIGHT: Charts stacked */}
-          <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
+        {/* ── Analytics tab ── */}
+        {activeTab === 'analytics' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="analytics-grid">
 
-            {/* Category breakdown */}
             <div className="card">
-              <div className="section-title" style={{ marginBottom: 12 }}>Goals by category</div>
+              <div className="section-title" style={{ marginBottom: 16 }}>Goals by category</div>
               {analyticsStatus === 'loading' && (
-                <div style={{ textAlign: 'center', padding: 24, color: 'var(--muted2)', fontSize: 13 }}>Loading…</div>
+                <div style={{ textAlign: 'center', padding: 32, color: 'var(--muted2)', fontSize: 13 }}>Loading…</div>
               )}
               {analyticsStatus === 'succeeded' && analytics.byCategory.length === 0 && (
-                <div style={{ textAlign: 'center', padding: 24, color: 'var(--muted2)', fontSize: 13 }}>Add goals to see breakdown</div>
+                <div style={{ textAlign: 'center', padding: 32, color: 'var(--muted2)', fontSize: 13 }}>Add goals to see category breakdown</div>
               )}
               {analyticsStatus === 'succeeded' && analytics.byCategory.length > 0 && (
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={290}>
                   <PieChart>
                     <Pie
                       data={analytics.byCategory.map((c) => ({ name: c._id, value: c.total }))}
                       cx="50%" cy="50%"
-                      innerRadius={50} outerRadius={78}
+                      innerRadius={72} outerRadius={112}
                       paddingAngle={3} dataKey="value"
                     >
                       {analytics.byCategory.map((_, i) => (
@@ -535,15 +641,14 @@ export default function Dashboard() {
                       ))}
                     </Pie>
                     <Tooltip contentStyle={TOOLTIP_STYLE} />
-                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span style={{ color: 'var(--muted)', fontSize: 12 }}>{v}</span>} />
+                    <Legend iconType="circle" iconSize={9} formatter={(v) => <span style={{ color: 'var(--muted)', fontSize: 12 }}>{v}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               )}
             </div>
 
-            {/* Completions over time */}
             <div className="card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <div className="section-title">Goals completed</div>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {[7, 30].map((d) => (
@@ -554,10 +659,10 @@ export default function Dashboard() {
                 </div>
               </div>
               {analyticsStatus === 'loading' && (
-                <div style={{ textAlign: 'center', padding: 24, color: 'var(--muted2)', fontSize: 13 }}>Loading…</div>
+                <div style={{ textAlign: 'center', padding: 32, color: 'var(--muted2)', fontSize: 13 }}>Loading…</div>
               )}
               {analyticsStatus === 'succeeded' && (
-                <ResponsiveContainer width="100%" height={170}>
+                <ResponsiveContainer width="100%" height={270}>
                   <LineChart data={fillDays(analytics.completionsByDay, analyticsDays)} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                     <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 10 }} tickLine={false} axisLine={false} interval={analyticsDays === 7 ? 0 : 'preserveStartEnd'} />
@@ -569,232 +674,99 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* ── Goals list ── */}
-        <div className="card">
-          <div style={{
-            display: 'flex', justifyContent: 'space-between',
-            alignItems: 'center', gap: 12, marginBottom: 14,
-          }}>
-            <div className="section-title">
-              Your Goals
-              {visibleGoals.length > 0 && (
-                <span style={{
-                  color: 'var(--muted2)', fontWeight: 400,
-                  fontSize: 14, marginLeft: 8,
-                }}>
-                  ({visibleGoals.length})
-                </span>
-              )}
+        {/* ── AI Suggest tab ── */}
+        {activeTab === 'ai' && (
+          <div className="card">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <div className="section-title">AI Goal Suggestions</div>
+              <span className="badge badge-medium">✦ Powered by Claude</span>
             </div>
-            {listStatus === 'loading' && (
-              <div style={{ color: 'var(--muted2)', fontSize: 13 }}>Loading…</div>
-            )}
-          </div>
-
-          <div style={{ display: 'grid', gap: 10 }}>
-            {visibleGoals.map((g) => (
-              <div
-                key={g._id}
-                className={[
-                  'goal-card',
-                  `priority-${g.priority}`,
-                  g.status === 'completed' ? 'completed' : '',
-                  'fade-in',
-                ].filter(Boolean).join(' ')}
+            <div style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 16, lineHeight: 1.6 }}>
+              Describe what you want to achieve in plain English and Claude will suggest 3 SMART goals — specific, measurable, and time-bound — that you can add with one click.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                value={aiIntent}
+                onChange={(e) => setAiIntent(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') fetchAiSuggestions() }}
+                placeholder='e.g. "get healthier and lose weight" or "advance my software career"'
+                style={{ flex: 1 }}
+              />
+              <button
+                className="btn-primary"
+                style={{ padding: '11px 22px', fontWeight: 700, flexShrink: 0 }}
+                onClick={fetchAiSuggestions}
+                disabled={aiLoading || !aiIntent.trim()}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="goal-title">{g.title}</div>
-                  {g.description && (
-                    <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4, lineHeight: 1.5 }}>
-                      {g.description}
+                {aiLoading ? 'Thinking…' : '✦ Suggest Goals'}
+              </button>
+            </div>
+            {aiError && <div style={{ marginTop: 10, color: '#fca5a5', fontSize: 13 }}>{aiError}</div>}
+            {aiSuggestions.length > 0 && (
+              <div style={{ marginTop: 16, display: 'grid', gap: 10 }}>
+                <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.04em' }}>
+                  SUGGESTED GOALS — click + Add to add them to your list
+                </div>
+                {aiSuggestions.map((s, i) => (
+                  <div key={i} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12,
+                    padding: '14px 16px', borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border)', background: 'rgba(124,58,237,0.06)',
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 15, fontWeight: 600 }}>{s.title}</div>
+                      {s.description && <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4, lineHeight: 1.5 }}>{s.description}</div>}
+                      <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                        <span className={`badge badge-${s.priority}`}>{s.priority}</span>
+                        <span className="badge badge-default">{s.category}</span>
+                        {s.suggestedDueDays && <span className="badge badge-default">~{s.suggestedDueDays} days</span>}
+                      </div>
                     </div>
-                  )}
-                  <div className="goal-meta">
-                    <span className={`badge badge-${g.priority}`}>{g.priority}</span>
-                    <span className="badge badge-default">{g.category}</span>
-                    {g.dueDate && (
-                      <span className={`badge ${isOverdue(g) ? 'badge-overdue' : 'badge-default'}`}>
-                        {isOverdue(g) ? '⚠ ' : ''}
-                        {formatDate(g.dueDate)}
-                      </span>
-                    )}
-                    <span className={`badge badge-${g.status}`}>
-                      {g.status === 'completed' ? '✓ done' : 'active'}
-                    </span>
-                    {(() => {
-                      const d = daysUntilDue(g)
-                      if (d === null || d < 0) return null
-                      if (d === 0) return <span className="badge badge-overdue">Due today</span>
-                      if (d <= 7) return <span className="badge badge-medium">in {d}d</span>
-                      return null
-                    })()}
+                    <button className="btn-primary" style={{ padding: '8px 16px', fontSize: 13, flexShrink: 0 }} onClick={() => addAiGoal(s)}>
+                      + Add
+                    </button>
                   </div>
-                </div>
-
-                <div className="goal-actions">
-                  {confirmDelete === g._id ? (
-                    <>
-                      <span style={{ fontSize: 12, color: 'var(--muted)', alignSelf: 'center' }}>
-                        Delete?
-                      </span>
-                      <button
-                        className="btn-danger"
-                        style={{ padding: '6px 12px', fontSize: 12 }}
-                        onClick={() => handleDelete(g._id)}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        style={{ padding: '6px 12px', fontSize: 12 }}
-                        onClick={() => setConfirmDelete(null)}
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        style={{ padding: '7px 12px', fontSize: 12 }}
-                        onClick={() => openEdit(g)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className={g.status === 'active' ? 'btn-success' : ''}
-                        style={{ padding: '7px 12px', fontSize: 12 }}
-                        onClick={() => handleToggle(g)}
-                      >
-                        {g.status === 'active' ? '✓ Done' : '↩ Reopen'}
-                      </button>
-                      <button
-                        style={{ padding: '7px 10px', fontSize: 12 }}
-                        onClick={() => setConfirmDelete(g._id)}
-                        title="Delete goal"
-                      >
-                        ✕
-                      </button>
-                    </>
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
+            )}
+          </div>
+        )}
 
-            {listStatus === 'succeeded' && visibleGoals.length === 0 && (
-              <div className="empty-state">
-                <div className="empty-icon">🎯</div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
-                  {filter === 'all' && !search.trim() ? 'No goals yet' : 'No matching goals'}
+        {/* ── Share tab ── */}
+        {activeTab === 'share' && (
+          <div className="card">
+            <div style={{ marginBottom: 16 }}>
+              <div className="section-title">Share My Goals</div>
+              <div style={{ fontSize: 14, color: 'var(--muted)', marginTop: 6, lineHeight: 1.6 }}>
+                Generate a public read-only link to your goals — great for accountability partners, coaches, or showing your progress without anyone needing an account.
+              </div>
+            </div>
+            {!shareToken ? (
+              <button className="btn-primary" style={{ padding: '11px 24px', fontWeight: 700, fontSize: 15 }} onClick={generateShare} disabled={shareLoading}>
+                {shareLoading ? 'Generating…' : '🔗 Generate Share Link'}
+              </button>
+            ) : (
+              <div style={{ display: 'grid', gap: 12 }}>
+                <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.04em' }}>YOUR SHARE LINK</div>
+                <div style={{
+                  padding: '12px 16px', borderRadius: 'var(--radius-sm)',
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
+                  fontFamily: 'monospace', fontSize: 13, color: 'var(--muted)', wordBreak: 'break-all',
+                }}>
+                  {`${window.location.origin}/share/${shareToken}`}
                 </div>
-                <div style={{ fontSize: 14 }}>
-                  {filter === 'all' && !search.trim()
-                    ? 'Add your first goal above to get started.'
-                    : 'Try adjusting your filters or search.'}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn-success" style={{ padding: '10px 20px', fontWeight: 600 }} onClick={copyShareLink}>
+                    {shareCopied ? '✓ Copied!' : '📋 Copy Link'}
+                  </button>
+                  <button className="btn-danger" style={{ padding: '10px 18px' }} onClick={revokeShare}>Revoke Link</button>
                 </div>
               </div>
             )}
           </div>
-        </div>
-
-        {/* ── AI Goal Suggestions ── */}
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <div className="section-title">AI Goal Suggestions</div>
-            <span className="badge badge-medium">✦ Powered by Claude</span>
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <input
-              value={aiIntent}
-              onChange={(e) => setAiIntent(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') fetchAiSuggestions() }}
-              placeholder='Describe what you want to achieve, e.g. "get healthier and lose weight"'
-              style={{ flex: 1 }}
-            />
-            <button
-              className="btn-primary"
-              style={{ padding: '11px 20px', fontWeight: 700, flexShrink: 0 }}
-              onClick={fetchAiSuggestions}
-              disabled={aiLoading || !aiIntent.trim()}
-            >
-              {aiLoading ? 'Thinking…' : '✦ Suggest'}
-            </button>
-          </div>
-          {aiError && <div style={{ marginTop: 10, color: '#fca5a5', fontSize: 13 }}>{aiError}</div>}
-          {aiSuggestions.length > 0 && (
-            <div style={{ marginTop: 14, display: 'grid', gap: 10 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.04em' }}>
-                SUGGESTED GOALS — click to add any of them
-              </div>
-              {aiSuggestions.map((s, i) => (
-                <div key={i} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12,
-                  padding: '12px 14px', borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border)', background: 'rgba(124,58,237,0.06)',
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{s.title}</div>
-                    {s.description && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{s.description}</div>}
-                    <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                      <span className={`badge badge-${s.priority}`}>{s.priority}</span>
-                      <span className="badge badge-default">{s.category}</span>
-                      {s.suggestedDueDays && <span className="badge badge-default">~{s.suggestedDueDays} days</span>}
-                    </div>
-                  </div>
-                  <button
-                    className="btn-primary"
-                    style={{ padding: '7px 14px', fontSize: 13, flexShrink: 0 }}
-                    onClick={() => addAiGoal(s)}
-                  >
-                    + Add
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ── Share Link ── */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-            <div>
-              <div className="section-title">Share My Goals</div>
-              <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 3 }}>
-                Generate a read-only link anyone can view — great for accountability
-              </div>
-            </div>
-          </div>
-          {!shareToken ? (
-            <button
-              className="btn-primary"
-              style={{ padding: '10px 22px', fontWeight: 700 }}
-              onClick={generateShare}
-              disabled={shareLoading}
-            >
-              {shareLoading ? 'Generating…' : '🔗 Generate Share Link'}
-            </button>
-          ) : (
-            <div style={{ display: 'grid', gap: 10 }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 14px', borderRadius: 'var(--radius-sm)',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
-                fontFamily: 'monospace', fontSize: 13, color: 'var(--muted)',
-                wordBreak: 'break-all',
-              }}>
-                {`${window.location.origin}/share/${shareToken}`}
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn-success" style={{ padding: '9px 18px', fontWeight: 600 }} onClick={copyShareLink}>
-                  {shareCopied ? '✓ Copied!' : '📋 Copy Link'}
-                </button>
-                <button className="btn-danger" style={{ padding: '9px 18px' }} onClick={revokeShare}>
-                  Revoke
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
 
       </div>
 
