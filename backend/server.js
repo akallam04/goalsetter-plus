@@ -18,9 +18,17 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: (origin, cb) => {
+      // Allow requests with no origin (curl, Postman, server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
+      cb(new Error(`CORS: origin ${origin} not allowed`))
+    },
     credentials: true,
   })
 )
