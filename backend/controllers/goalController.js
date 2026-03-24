@@ -79,7 +79,7 @@ const updateGoal = async (req, res) => {
     throw new Error('Goal not found')
   }
 
-  const fields = ['title', 'description', 'category', 'priority', 'status', 'dueDate']
+  const fields = ['title', 'description', 'category', 'priority', 'status', 'dueDate', 'subtasks', 'notes']
   fields.forEach((field) => {
     if (req.body[field] !== undefined) goal[field] = req.body[field]
   })
@@ -107,4 +107,58 @@ const deleteGoal = async (req, res) => {
   res.json({ message: 'Goal removed', id })
 }
 
-export { getGoals, getGoalById, createGoal, updateGoal, deleteGoal }
+const getGoalStats = async (req, res) => {
+  const userId = req.user._id
+
+  const total     = await Goal.countDocuments({ user: userId })
+  const active    = await Goal.countDocuments({ user: userId, status: 'active' })
+  const completed = await Goal.countDocuments({ user: userId, status: 'completed' })
+
+  const now      = new Date()
+  const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+
+  const overdue = await Goal.countDocuments({
+    user: userId,
+    status: 'active',
+    dueDate: { $ne: null, $lt: todayUTC },
+  })
+
+  res.json({ total, active, completed, overdue })
+}
+
+const getGoalAnalytics = async (req, res) => {
+  const userId = req.user._id
+  const days   = Math.min(Number(req.query.days) || 30, 90)
+  const since  = new Date()
+  since.setDate(since.getDate() - days)
+
+  // Completions per day (uses updatedAt as proxy for completedAt)
+  const completionsByDay = await Goal.aggregate([
+    { $match: { user: userId, status: 'completed', updatedAt: { $gte: since } } },
+    {
+      $group: {
+        _id:   { $dateToString: { format: '%Y-%m-%d', date: '$updatedAt' } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ])
+
+  // Goals by category with completion breakdown
+  const byCategory = await Goal.aggregate([
+    { $match: { user: userId } },
+    {
+      $group: {
+        _id:       '$category',
+        total:     { $sum: 1 },
+        completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
+      },
+    },
+    { $sort: { total: -1 } },
+    { $limit: 8 },
+  ])
+
+  res.json({ completionsByDay, byCategory })
+}
+
+export { getGoals, getGoalById, createGoal, updateGoal, deleteGoal, getGoalStats, getGoalAnalytics }

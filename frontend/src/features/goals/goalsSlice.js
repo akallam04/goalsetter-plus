@@ -26,6 +26,19 @@ export const fetchStats = createAsyncThunk('goals/stats', async (_, thunkAPI) =>
   }
 })
 
+export const fetchAnalytics = createAsyncThunk('goals/analytics', async (days = 30, thunkAPI) => {
+  try {
+    const token = thunkAPI.getState().auth.token
+    const { data } = await client.get('/goals/analytics', {
+      params: { days },
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return data
+  } catch (err) {
+    return thunkAPI.rejectWithValue(err.response?.data?.message || err.message)
+  }
+})
+
 export const createGoal = createAsyncThunk('goals/create', async (payload, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token
@@ -72,6 +85,8 @@ const goalsSlice = createSlice({
     filter: 'all',
     stats: { total: 0, active: 0, completed: 0, overdue: 0 },
     statsStatus: 'idle',
+    analytics: { completionsByDay: [], byCategory: [] },
+    analyticsStatus: 'idle',
   },
   reducers: {
     setFilter: (state, action) => {
@@ -101,6 +116,16 @@ const goalsSlice = createSlice({
       })
       .addCase(fetchStats.rejected, (state) => {
         state.statsStatus = 'failed'
+      })
+      .addCase(fetchAnalytics.pending, (state) => {
+        state.analyticsStatus = 'loading'
+      })
+      .addCase(fetchAnalytics.fulfilled, (state, action) => {
+        state.analyticsStatus = 'succeeded'
+        state.analytics = action.payload
+      })
+      .addCase(fetchAnalytics.rejected, (state) => {
+        state.analyticsStatus = 'failed'
       })
       .addCase(createGoal.pending, (state) => {
         state.createStatus = 'loading'

@@ -6,12 +6,18 @@ import {
   createGoal,
   updateGoal,
   deleteGoal,
+  getGoalStats,
+  getGoalAnalytics,
 } from '../controllers/goalController.js'
 import { protect } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
 router.use(protect)
+
+// Named routes MUST come before /:id to avoid param collision
+router.get('/stats',     getGoalStats)
+router.get('/analytics', getGoalAnalytics)
 
 router
   .route('/')

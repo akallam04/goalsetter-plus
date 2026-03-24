@@ -5,6 +5,7 @@ import {
   createGoal, deleteGoal, fetchGoals, fetchStats,
   setFilter, updateGoal,
 } from '../features/goals/goalsSlice'
+import AnalyticsSection from '../components/AnalyticsSection'
 
 export default function Dashboard() {
   const dispatch = useDispatch()
@@ -29,6 +30,9 @@ export default function Dashboard() {
   const [editDueDate, setEditDueDate]       = useState('')
   const [editStatus, setEditStatus]         = useState('active')
   const [editDescription, setEditDescription] = useState('')
+  const [editNotes, setEditNotes]           = useState('')
+  const [editSubtasks, setEditSubtasks]     = useState([])
+  const [newSubtask, setNewSubtask]         = useState('')
 
   // UX state
   const [toast, setToast]                 = useState(null)
@@ -87,6 +91,8 @@ export default function Dashboard() {
     setEditStatus(g.status || 'active')
     setEditDueDate(g.dueDate ? String(g.dueDate).slice(0, 10) : '')
     setEditDescription(g.description || '')
+    setEditNotes(g.notes || '')
+    setEditSubtasks(g.subtasks ? g.subtasks.map((s) => ({ ...s })) : [])
   }
 
   const closeEdit = () => {
@@ -97,11 +103,17 @@ export default function Dashboard() {
     setEditDueDate('')
     setEditStatus('active')
     setEditDescription('')
+    setEditNotes('')
+    setEditSubtasks([])
+    setNewSubtask('')
   }
 
   const saveEdit = async (e) => {
     e.preventDefault()
     if (!editing || !editTitle.trim()) return
+    // Strip frontend-only localId before sending
+    const subtasksPayload = editSubtasks.map(({ localId, ...rest }) => rest)
+
     await dispatch(updateGoal({
       id: editing._id,
       updates: {
@@ -110,6 +122,8 @@ export default function Dashboard() {
         priority: editPriority,
         status: editStatus,
         description: editDescription,
+        notes: editNotes,
+        subtasks: subtasksPayload,
         dueDate: editDueDate ? `${editDueDate}T12:00:00` : null,
       },
     }))
@@ -177,6 +191,34 @@ export default function Dashboard() {
     const dueStr   = due.toLocaleDateString('en-CA', mst)      // YYYY-MM-DD
     const todayStr = new Date().toLocaleDateString('en-CA', mst)
     return dueStr < todayStr
+  }
+
+  const daysUntilDue = (g) => {
+    if (!g.dueDate || g.status !== 'active') return null
+    const mst = { timeZone: 'America/Denver' }
+    const dueStr   = new Date(g.dueDate).toLocaleDateString('en-CA', mst)
+    const todayStr = new Date().toLocaleDateString('en-CA', mst)
+    const diff     = Math.round((new Date(dueStr) - new Date(todayStr)) / 86400000)
+    return diff
+  }
+
+  const addSubtask = () => {
+    if (!newSubtask.trim()) return
+    setEditSubtasks((prev) => [
+      ...prev,
+      { localId: Date.now(), text: newSubtask.trim(), completed: false },
+    ])
+    setNewSubtask('')
+  }
+
+  const toggleSubtask = (index) => {
+    setEditSubtasks((prev) =>
+      prev.map((s, i) => (i === index ? { ...s, completed: !s.completed } : s))
+    )
+  }
+
+  const removeSubtask = (index) => {
+    setEditSubtasks((prev) => prev.filter((_, i) => i !== index))
   }
 
   const completionRate = stats.total > 0
@@ -410,6 +452,13 @@ export default function Dashboard() {
                     <span className={`badge badge-${g.status}`}>
                       {g.status === 'completed' ? '✓ done' : 'active'}
                     </span>
+                    {(() => {
+                      const d = daysUntilDue(g)
+                      if (d === null || d < 0) return null
+                      if (d === 0) return <span className="badge badge-overdue">Due today</span>
+                      if (d <= 7) return <span className="badge badge-medium">in {d}d</span>
+                      return null
+                    })()}
                   </div>
                 </div>
 
@@ -476,6 +525,10 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* ── Analytics ── */}
+        <AnalyticsSection />
+
       </div>
 
       {/* ── Edit modal ── */}
@@ -491,7 +544,7 @@ export default function Dashboard() {
                 ✕ Close
               </button>
             </div>
-            <form onSubmit={saveEdit} style={{ display: 'grid', gap: 14 }}>
+            <form onSubmit={saveEdit} style={{ display: 'grid', gap: 14, maxHeight: '70vh', overflowY: 'auto', paddingRight: 4 }}>
               <div>
                 <label className="label">Title</label>
                 <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
@@ -531,9 +584,84 @@ export default function Dashboard() {
                   </select>
                 </div>
               </div>
+
+              {/* Sub-tasks */}
+              <div>
+                <label className="label">Sub-tasks</label>
+                <div style={{ display: 'grid', gap: 6, marginBottom: 8 }}>
+                  {editSubtasks.map((s, i) => (
+                    <div key={s._id || s.localId} style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '8px 10px', borderRadius: 8,
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid var(--border)',
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={s.completed}
+                        onChange={() => toggleSubtask(i)}
+                        style={{ width: 16, height: 16, accentColor: 'var(--accent)', flexShrink: 0 }}
+                      />
+                      <span style={{
+                        flex: 1, fontSize: 13,
+                        textDecoration: s.completed ? 'line-through' : 'none',
+                        color: s.completed ? 'var(--muted2)' : 'var(--text)',
+                      }}>
+                        {s.text}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeSubtask(i)}
+                        style={{ padding: '2px 7px', fontSize: 11, opacity: 0.6 }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    value={newSubtask}
+                    onChange={(e) => setNewSubtask(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubtask() } }}
+                    placeholder="Add a sub-task… (Enter to add)"
+                    style={{ fontSize: 13 }}
+                  />
+                  <button type="button" onClick={addSubtask} style={{ padding: '9px 14px', fontSize: 13, flexShrink: 0 }}>
+                    + Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="label">Notes</label>
+                <textarea
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Any notes, links, or context for this goal…"
+                  rows={3}
+                  style={{
+                    width: '100%', resize: 'vertical', minHeight: 72,
+                    background: 'rgba(0,0,0,0.32)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)', padding: '11px 14px',
+                    outline: 'none', color: 'var(--text)', fontSize: 14,
+                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'rgba(124,58,237,0.6)'
+                    e.target.style.boxShadow = '0 0 0 3px var(--accent-glow)'
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = ''
+                    e.target.style.boxShadow = ''
+                  }}
+                />
+              </div>
+
               <div style={{
                 display: 'flex', justifyContent: 'space-between',
-                gap: 10, flexWrap: 'wrap', marginTop: 4,
+                gap: 10, flexWrap: 'wrap', paddingTop: 4,
               }}>
                 <button
                   type="button"

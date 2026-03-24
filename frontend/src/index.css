@@ -379,9 +379,10 @@ button:disabled {
 
 /* ─── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 720px) {
-  .form-grid-3 { grid-template-columns: 1fr 1fr; }
-  .main-grid   { grid-template-columns: 1fr !important; }
-  .stats-row   { grid-template-columns: 1fr 1fr; }
+  .form-grid-3   { grid-template-columns: 1fr 1fr; }
+  .main-grid     { grid-template-columns: 1fr !important; }
+  .stats-row     { grid-template-columns: 1fr 1fr; }
+  .analytics-grid { grid-template-columns: 1fr !important; }
 }
 @media (max-width: 480px) {
   .form-grid-3 { grid-template-columns: 1fr; }

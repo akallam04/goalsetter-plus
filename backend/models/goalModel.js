@@ -1,5 +1,10 @@
 import mongoose from 'mongoose'
 
+const subtaskSchema = new mongoose.Schema({
+  text:      { type: String, required: true, trim: true, maxlength: 200 },
+  completed: { type: Boolean, default: false },
+})
+
 const goalSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -16,7 +21,9 @@ const goalSchema = new mongoose.Schema(
       enum: ['active', 'completed'],
       default: 'active',
     },
-    dueDate: { type: Date, default: null },
+    dueDate:  { type: Date, default: null },
+    subtasks: { type: [subtaskSchema], default: [] },
+    notes:    { type: String, default: '', trim: true, maxlength: 5000 },
   },
   { timestamps: true }
 )
