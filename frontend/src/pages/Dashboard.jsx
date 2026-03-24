@@ -5,6 +5,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, Legend,
 } from 'recharts'
+import * as chrono from 'chrono-node'
+import client from '../api/client'
 import { logout } from '../features/auth/authSlice'
 import {
   createGoal, deleteGoal, fetchGoals, fetchStats,
@@ -59,6 +61,21 @@ export default function Dashboard() {
   const [toast, setToast]                 = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
 
+  // AI suggestions
+  const [aiIntent, setAiIntent]       = useState('')
+  const [aiLoading, setAiLoading]     = useState(false)
+  const [aiSuggestions, setAiSuggestions] = useState([])
+  const [aiError, setAiError]         = useState(null)
+
+  // Natural language date
+  const [nlDate, setNlDate]           = useState('')
+  const [nlParsed, setNlParsed]       = useState(null)
+
+  // Share link
+  const [shareToken, setShareToken]   = useState(null)
+  const [shareLoading, setShareLoading] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
+
   // Ref for keyboard shortcut N → focus title input
   const titleInputRef = useRef(null)
 
@@ -71,6 +88,83 @@ export default function Dashboard() {
   const switchAnalyticsDays = (d) => {
     setAnalyticsDays(d)
     dispatch(fetchAnalytics(d))
+  }
+
+  /* ── AI suggestions ── */
+  const fetchAiSuggestions = async () => {
+    if (!aiIntent.trim()) return
+    setAiLoading(true)
+    setAiError(null)
+    setAiSuggestions([])
+    try {
+      const token = localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth')).token : null
+      const { data } = await client.post('/ai/suggest-goals', { intent: aiIntent }, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setAiSuggestions(data)
+    } catch (err) {
+      setAiError(err.response?.data?.message || 'AI suggestion failed. Try again.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const addAiGoal = async (suggestion) => {
+    const payload = {
+      title: suggestion.title,
+      description: suggestion.description,
+      category: suggestion.category,
+      priority: suggestion.priority,
+    }
+    if (suggestion.suggestedDueDays) {
+      const due = new Date()
+      due.setDate(due.getDate() + suggestion.suggestedDueDays)
+      payload.dueDate = due.toISOString().slice(0, 10) + 'T12:00:00'
+    }
+    await dispatch(createGoal(payload))
+    refreshStats()
+    showToast(`"${suggestion.title.slice(0, 40)}…" added!`)
+    setAiSuggestions((prev) => prev.filter((s) => s.title !== suggestion.title))
+  }
+
+  /* ── Natural language date ── */
+  const handleNlDate = (text) => {
+    setNlDate(text)
+    if (!text.trim()) { setNlParsed(null); return }
+    const result = chrono.parseDate(text)
+    setNlParsed(result)
+    if (result) {
+      setDueDate(result.toLocaleDateString('en-CA'))
+    }
+  }
+
+  /* ── Share link ── */
+  const generateShare = async () => {
+    setShareLoading(true)
+    try {
+      const token = localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth')).token : null
+      const { data } = await client.post('/share/generate', {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setShareToken(data.token)
+    } catch { /* silent */ } finally {
+      setShareLoading(false)
+    }
+  }
+
+  const revokeShare = async () => {
+    try {
+      const token = localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth')).token : null
+      await client.delete('/share/revoke', { headers: { Authorization: `Bearer ${token}` } })
+      setShareToken(null)
+    } catch { /* silent */ }
+  }
+
+  const copyShareLink = () => {
+    const url = `${window.location.origin}/share/${shareToken}`
+    navigator.clipboard.writeText(url)
+    setShareCopied(true)
+    setTimeout(() => setShareCopied(false), 2000)
   }
 
   // Press N to focus the title input (skip if typing in a field or modal is open)
@@ -360,7 +454,18 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <label className="label">Due Date</label>
-                    <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                    <input type="date" value={dueDate} onChange={(e) => { setDueDate(e.target.value); setNlDate(''); setNlParsed(null) }} />
+                    <input
+                      value={nlDate}
+                      onChange={(e) => handleNlDate(e.target.value)}
+                      placeholder='or type "next Friday"'
+                      style={{ marginTop: 6, fontSize: 12, padding: '7px 10px' }}
+                    />
+                    {nlDate && (
+                      <div style={{ fontSize: 11, marginTop: 4, color: nlParsed ? '#6ee7b7' : '#fca5a5' }}>
+                        {nlParsed ? `→ ${nlParsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Couldn\'t parse date'}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
@@ -590,6 +695,105 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── AI Goal Suggestions ── */}
+        <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <div className="section-title">AI Goal Suggestions</div>
+            <span className="badge badge-medium">✦ Powered by Claude</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <input
+              value={aiIntent}
+              onChange={(e) => setAiIntent(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') fetchAiSuggestions() }}
+              placeholder='Describe what you want to achieve, e.g. "get healthier and lose weight"'
+              style={{ flex: 1 }}
+            />
+            <button
+              className="btn-primary"
+              style={{ padding: '11px 20px', fontWeight: 700, flexShrink: 0 }}
+              onClick={fetchAiSuggestions}
+              disabled={aiLoading || !aiIntent.trim()}
+            >
+              {aiLoading ? 'Thinking…' : '✦ Suggest'}
+            </button>
+          </div>
+          {aiError && <div style={{ marginTop: 10, color: '#fca5a5', fontSize: 13 }}>{aiError}</div>}
+          {aiSuggestions.length > 0 && (
+            <div style={{ marginTop: 14, display: 'grid', gap: 10 }}>
+              <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.04em' }}>
+                SUGGESTED GOALS — click to add any of them
+              </div>
+              {aiSuggestions.map((s, i) => (
+                <div key={i} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12,
+                  padding: '12px 14px', borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border)', background: 'rgba(124,58,237,0.06)',
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{s.title}</div>
+                    {s.description && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{s.description}</div>}
+                    <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                      <span className={`badge badge-${s.priority}`}>{s.priority}</span>
+                      <span className="badge badge-default">{s.category}</span>
+                      {s.suggestedDueDays && <span className="badge badge-default">~{s.suggestedDueDays} days</span>}
+                    </div>
+                  </div>
+                  <button
+                    className="btn-primary"
+                    style={{ padding: '7px 14px', fontSize: 13, flexShrink: 0 }}
+                    onClick={() => addAiGoal(s)}
+                  >
+                    + Add
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Share Link ── */}
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+            <div>
+              <div className="section-title">Share My Goals</div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 3 }}>
+                Generate a read-only link anyone can view — great for accountability
+              </div>
+            </div>
+          </div>
+          {!shareToken ? (
+            <button
+              className="btn-primary"
+              style={{ padding: '10px 22px', fontWeight: 700 }}
+              onClick={generateShare}
+              disabled={shareLoading}
+            >
+              {shareLoading ? 'Generating…' : '🔗 Generate Share Link'}
+            </button>
+          ) : (
+            <div style={{ display: 'grid', gap: 10 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+                background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
+                fontFamily: 'monospace', fontSize: 13, color: 'var(--muted)',
+                wordBreak: 'break-all',
+              }}>
+                {`${window.location.origin}/share/${shareToken}`}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn-success" style={{ padding: '9px 18px', fontWeight: 600 }} onClick={copyShareLink}>
+                  {shareCopied ? '✓ Copied!' : '📋 Copy Link'}
+                </button>
+                <button className="btn-danger" style={{ padding: '9px 18px' }} onClick={revokeShare}>
+                  Revoke
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
