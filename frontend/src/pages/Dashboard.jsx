@@ -18,13 +18,15 @@ const TOOLTIP_STYLE = {
   background: '#111827', border: '1px solid rgba(255,255,255,0.10)',
   borderRadius: 10, color: '#f1f5f9', fontSize: 13,
 }
+const MST_TZ = 'America/Denver'
 const fillDays = (data, days) => {
   const map = Object.fromEntries(data.map((d) => [d._id, d.count]))
   return Array.from({ length: days }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (days - 1 - i))
-    const key   = d.toLocaleDateString('en-CA')
-    const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    // Use the same timezone as the backend $dateToString
+    const key   = d.toLocaleDateString('en-CA', { timeZone: MST_TZ })
+    const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: MST_TZ })
     return { date: label, count: map[key] || 0 }
   })
 }
@@ -428,7 +430,7 @@ export default function Dashboard() {
             <button
               key={id}
               className={`tab-btn${activeTab === id ? ' active' : ''}`}
-              onClick={() => setActiveTab(id)}
+              onClick={() => { setActiveTab(id); if (id === 'analytics') dispatch(fetchAnalytics(analyticsDays)) }}
             >
               {label}
             </button>
@@ -653,7 +655,7 @@ export default function Dashboard() {
                   <LineChart data={fillDays(analytics.completionsByDay, analyticsDays)} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                     <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 10 }} tickLine={false} axisLine={false} interval={analyticsDays === 7 ? 0 : 'preserveStartEnd'} />
-                    <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <YAxis allowDecimals={false} domain={[0, 'dataMax + 1']} tick={{ fill: '#64748b', fontSize: 10 }} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: 'rgba(255,255,255,0.08)' }} />
                     <Line type="monotone" dataKey="count" name="Completed" stroke="#7c3aed" strokeWidth={2.5} dot={{ fill: '#7c3aed', strokeWidth: 0, r: 3 }} activeDot={{ r: 5, fill: '#a78bfa' }} />
                   </LineChart>

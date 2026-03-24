@@ -84,6 +84,13 @@ const updateGoal = async (req, res) => {
     if (req.body[field] !== undefined) goal[field] = req.body[field]
   })
 
+  // Track exact completion time
+  if (req.body.status === 'completed' && !goal.completedAt) {
+    goal.completedAt = new Date()
+  } else if (req.body.status === 'active') {
+    goal.completedAt = null
+  }
+
   const updatedGoal = await goal.save()
   res.json(updatedGoal)
 }
@@ -131,13 +138,20 @@ const getGoalAnalytics = async (req, res) => {
   const days   = Math.min(Number(req.query.days) || 30, 90)
   const since  = new Date()
   since.setDate(since.getDate() - days)
+  since.setHours(0, 0, 0, 0)
 
-  // Completions per day (uses updatedAt as proxy for completedAt)
+  // Completions per day — use completedAt (accurate) with MST timezone grouping
   const completionsByDay = await Goal.aggregate([
-    { $match: { user: userId, status: 'completed', updatedAt: { $gte: since } } },
+    {
+      $match: {
+        user: userId,
+        status: 'completed',
+        completedAt: { $gte: since },
+      },
+    },
     {
       $group: {
-        _id:   { $dateToString: { format: '%Y-%m-%d', date: '$updatedAt' } },
+        _id:   { $dateToString: { format: '%Y-%m-%d', date: '$completedAt', timezone: 'America/Denver' } },
         count: { $sum: 1 },
       },
     },
