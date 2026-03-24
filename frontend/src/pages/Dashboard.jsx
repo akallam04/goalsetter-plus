@@ -1,16 +1,37 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import {
+  ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts'
 import { logout } from '../features/auth/authSlice'
 import {
   createGoal, deleteGoal, fetchGoals, fetchStats,
-  setFilter, updateGoal,
+  fetchAnalytics, setFilter, updateGoal,
 } from '../features/goals/goalsSlice'
-import AnalyticsSection from '../components/AnalyticsSection'
+
+const CHART_COLORS = ['#7c3aed','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#14b8a6']
+const TOOLTIP_STYLE = {
+  background: '#111827', border: '1px solid rgba(255,255,255,0.10)',
+  borderRadius: 10, color: '#f1f5f9', fontSize: 13,
+}
+const fillDays = (data, days) => {
+  const map = Object.fromEntries(data.map((d) => [d._id, d.count]))
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (days - 1 - i))
+    const key   = d.toLocaleDateString('en-CA')
+    const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    return { date: label, count: map[key] || 0 }
+  })
+}
 
 export default function Dashboard() {
   const dispatch = useDispatch()
   const user = useSelector((s) => s.auth.user)
-  const { items, listStatus, createStatus, error, filter, stats } = useSelector((s) => s.goals)
+  const { items, listStatus, createStatus, error, filter, stats, analytics, analyticsStatus } = useSelector((s) => s.goals)
+  const [analyticsDays, setAnalyticsDays] = useState(30)
 
   // Create form
   const [title, setTitle]       = useState('')
@@ -44,7 +65,13 @@ export default function Dashboard() {
   useEffect(() => {
     dispatch(fetchGoals())
     dispatch(fetchStats())
+    dispatch(fetchAnalytics(30))
   }, [dispatch])
+
+  const switchAnalyticsDays = (d) => {
+    setAnalyticsDays(d)
+    dispatch(fetchAnalytics(d))
+  }
 
   // Press N to focus the title input (skip if typing in a field or modal is open)
   useEffect(() => {
@@ -296,106 +323,145 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Create form + Controls ── */}
-        <div className="main-grid">
+        {/* ── Main 2-column: [Left: Add Goal + Filter] | [Right: Charts] ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 16 }} className="main-grid">
 
-          {/* Create form */}
-          <div className="card">
-            <div style={{
-              display: 'flex', justifyContent: 'space-between',
-              alignItems: 'baseline', gap: 12, marginBottom: 14,
-            }}>
-              <div className="section-title">Add a Goal</div>
-              <div style={{ color: 'var(--muted2)', fontSize: 12 }}>Clear, specific, achievable</div>
-            </div>
-            <form onSubmit={addGoal} style={{ display: 'grid', gap: 12 }}>
-              <div>
-                <label className="label">What do you want to achieve?</label>
-                <input
-                  ref={titleInputRef}
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Ship my portfolio project by end of month"
-                />
+          {/* LEFT: Add Goal + Filter & Sort stacked */}
+          <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
+
+            {/* Add Goal */}
+            <div className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 14 }}>
+                <div className="section-title">Add a Goal</div>
+                <div style={{ color: 'var(--muted2)', fontSize: 12 }}>Clear, specific, achievable</div>
               </div>
-              <div className="form-grid-3">
+              <form onSubmit={addGoal} style={{ display: 'grid', gap: 12 }}>
                 <div>
-                  <label className="label">Category</label>
+                  <label className="label">What do you want to achieve?</label>
                   <input
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    placeholder="e.g., Career"
+                    ref={titleInputRef}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g., Ship my portfolio project by end of month"
                   />
                 </div>
-                <div>
-                  <label className="label">Priority</label>
-                  <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
+                <div className="form-grid-3">
+                  <div>
+                    <label className="label">Category</label>
+                    <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g., Career" />
+                  </div>
+                  <div>
+                    <label className="label">Priority</label>
+                    <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Due Date</label>
+                    <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                  </div>
                 </div>
-                <div>
-                  <label className="label">Due Date</label>
-                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  {error ? <div style={{ color: '#fca5a5', fontSize: 13 }}>{error}</div> : <div />}
+                  <button type="submit" className="btn-primary" style={{ padding: '11px 28px', fontWeight: 700, fontSize: 15 }} disabled={createStatus === 'loading'}>
+                    {createStatus === 'loading' ? 'Adding…' : '+ Add Goal'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Filter & Sort */}
+            <div className="card" style={{ display: 'grid', gap: 14, alignContent: 'start' }}>
+              <div className="section-title">Filter &amp; Sort</div>
+              <div>
+                <label className="label">Status</label>
+                <div className="filter-group">
+                  {['all', 'active', 'completed'].map((f) => (
+                    <button key={f} className={`filter-btn${filter === f ? ' active' : ''}`} onClick={() => dispatch(setFilter(f))} style={{ textTransform: 'capitalize' }}>
+                      {f}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                {error
-                  ? <div style={{ color: '#fca5a5', fontSize: 13 }}>{error}</div>
-                  : <div />}
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  style={{ padding: '11px 28px', fontWeight: 700, fontSize: 15 }}
-                  disabled={createStatus === 'loading'}
-                >
-                  {createStatus === 'loading' ? 'Adding…' : '+ Add Goal'}
-                </button>
+              <div>
+                <label className="label">Search</label>
+                <div className="search-wrap">
+                  <span className="search-icon">⌕</span>
+                  <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title…" />
+                </div>
               </div>
-            </form>
+              <div>
+                <label className="label">Sort by</label>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="dueSoon">Due date (soonest)</option>
+                  <option value="priorityHigh">Priority (high → low)</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          {/* Filter + sort controls */}
-          <div className="card" style={{ display: 'grid', gap: 14, alignContent: 'start' }}>
-            <div className="section-title">Filter &amp; Sort</div>
+          {/* RIGHT: Charts stacked */}
+          <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
 
-            <div>
-              <label className="label">Status</label>
-              <div className="filter-group">
-                {['all', 'active', 'completed'].map((f) => (
-                  <button
-                    key={f}
-                    className={`filter-btn${filter === f ? ' active' : ''}`}
-                    onClick={() => dispatch(setFilter(f))}
-                    style={{ textTransform: 'capitalize' }}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
+            {/* Category breakdown */}
+            <div className="card">
+              <div className="section-title" style={{ marginBottom: 12 }}>Goals by category</div>
+              {analyticsStatus === 'loading' && (
+                <div style={{ textAlign: 'center', padding: 24, color: 'var(--muted2)', fontSize: 13 }}>Loading…</div>
+              )}
+              {analyticsStatus === 'succeeded' && analytics.byCategory.length === 0 && (
+                <div style={{ textAlign: 'center', padding: 24, color: 'var(--muted2)', fontSize: 13 }}>Add goals to see breakdown</div>
+              )}
+              {analyticsStatus === 'succeeded' && analytics.byCategory.length > 0 && (
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={analytics.byCategory.map((c) => ({ name: c._id, value: c.total }))}
+                      cx="50%" cy="50%"
+                      innerRadius={50} outerRadius={78}
+                      paddingAngle={3} dataKey="value"
+                    >
+                      {analytics.byCategory.map((_, i) => (
+                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={TOOLTIP_STYLE} />
+                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span style={{ color: 'var(--muted)', fontSize: 12 }}>{v}</span>} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
-            <div>
-              <label className="label">Search</label>
-              <div className="search-wrap">
-                <span className="search-icon">⌕</span>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by title…"
-                />
+            {/* Completions over time */}
+            <div className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div className="section-title">Goals completed</div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {[7, 30].map((d) => (
+                    <button key={d} className={`filter-btn${analyticsDays === d ? ' active' : ''}`} style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => switchAnalyticsDays(d)}>
+                      {d}d
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            <div>
-              <label className="label">Sort by</label>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="dueSoon">Due date (soonest)</option>
-                <option value="priorityHigh">Priority (high → low)</option>
-              </select>
+              {analyticsStatus === 'loading' && (
+                <div style={{ textAlign: 'center', padding: 24, color: 'var(--muted2)', fontSize: 13 }}>Loading…</div>
+              )}
+              {analyticsStatus === 'succeeded' && (
+                <ResponsiveContainer width="100%" height={170}>
+                  <LineChart data={fillDays(analytics.completionsByDay, analyticsDays)} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                    <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 10 }} tickLine={false} axisLine={false} interval={analyticsDays === 7 ? 0 : 'preserveStartEnd'} />
+                    <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: 'rgba(255,255,255,0.08)' }} />
+                    <Line type="monotone" dataKey="count" name="Completed" stroke="#7c3aed" strokeWidth={2.5} dot={{ fill: '#7c3aed', strokeWidth: 0, r: 3 }} activeDot={{ r: 5, fill: '#a78bfa' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>
@@ -525,9 +591,6 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-
-        {/* ── Analytics ── */}
-        <AnalyticsSection />
 
       </div>
 
