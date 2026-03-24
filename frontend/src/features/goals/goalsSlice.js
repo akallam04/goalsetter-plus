@@ -75,6 +75,22 @@ export const deleteGoal = createAsyncThunk('goals/delete', async (id, thunkAPI) 
   }
 })
 
+const MST = { timeZone: 'America/Denver' }
+const todayMST = () => new Date().toLocaleDateString('en-CA', MST)
+
+function computeStats(items) {
+  const today = todayMST()
+  return {
+    total: items.length,
+    active: items.filter((g) => g.status === 'active').length,
+    completed: items.filter((g) => g.status === 'completed').length,
+    overdue: items.filter((g) => {
+      if (!g.dueDate || g.status !== 'active') return false
+      return new Date(g.dueDate).toLocaleDateString('en-CA', MST) < today
+    }).length,
+  }
+}
+
 const goalsSlice = createSlice({
   name: 'goals',
   initialState: {
@@ -102,6 +118,8 @@ const goalsSlice = createSlice({
       .addCase(fetchGoals.fulfilled, (state, action) => {
         state.listStatus = 'succeeded'
         state.items = action.payload
+        state.stats = computeStats(action.payload)
+        state.statsStatus = 'succeeded'
       })
       .addCase(fetchGoals.rejected, (state, action) => {
         state.listStatus = 'failed'
@@ -134,6 +152,7 @@ const goalsSlice = createSlice({
       .addCase(createGoal.fulfilled, (state, action) => {
         state.createStatus = 'succeeded'
         state.items = [action.payload, ...state.items]
+        state.stats = computeStats(state.items)
       })
       .addCase(createGoal.rejected, (state, action) => {
         state.createStatus = 'failed'
@@ -141,9 +160,11 @@ const goalsSlice = createSlice({
       })
       .addCase(updateGoal.fulfilled, (state, action) => {
         state.items = state.items.map((g) => (g._id === action.payload._id ? action.payload : g))
+        state.stats = computeStats(state.items)
       })
       .addCase(deleteGoal.fulfilled, (state, action) => {
         state.items = state.items.filter((g) => g._id !== action.payload)
+        state.stats = computeStats(state.items)
       })
   },
 })

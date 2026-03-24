@@ -9,7 +9,7 @@ import * as chrono from 'chrono-node'
 import client from '../api/client'
 import { logout } from '../features/auth/authSlice'
 import {
-  createGoal, deleteGoal, fetchGoals, fetchStats,
+  createGoal, deleteGoal, fetchGoals,
   fetchAnalytics, setFilter, updateGoal,
 } from '../features/goals/goalsSlice'
 
@@ -84,7 +84,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     dispatch(fetchGoals())
-    dispatch(fetchStats())
     dispatch(fetchAnalytics(30))
   }, [dispatch])
 
@@ -125,7 +124,7 @@ export default function Dashboard() {
       payload.dueDate = due.toISOString().slice(0, 10) + 'T12:00:00'
     }
     await dispatch(createGoal(payload))
-    refreshStats()
+
     showToast(`"${suggestion.title.slice(0, 40)}…" added!`)
     setAiSuggestions((prev) => prev.filter((s) => s.title !== suggestion.title))
   }
@@ -186,8 +185,6 @@ export default function Dashboard() {
     return () => window.removeEventListener('keydown', handler)
   }, [editing])
 
-  const refreshStats = () => dispatch(fetchStats())
-
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 2800)
@@ -202,7 +199,7 @@ export default function Dashboard() {
     await dispatch(createGoal(payload))
     setTitle('')
     setDueDate('')
-    refreshStats()
+
     showToast('Goal added!')
   }
 
@@ -252,7 +249,7 @@ export default function Dashboard() {
       },
     }))
     closeEdit()
-    refreshStats()
+
     showToast('Goal updated!')
   }
 
@@ -260,7 +257,7 @@ export default function Dashboard() {
   const handleToggle = async (g) => {
     const next = g.status === 'active' ? 'completed' : 'active'
     await dispatch(updateGoal({ id: g._id, updates: { status: next } }))
-    refreshStats()
+
     showToast(next === 'completed' ? 'Marked as complete!' : 'Goal reopened')
   }
 
@@ -268,7 +265,7 @@ export default function Dashboard() {
   const handleDelete = async (id) => {
     await dispatch(deleteGoal(id))
     setConfirmDelete(null)
-    refreshStats()
+
     showToast('Goal deleted', 'error')
   }
 
