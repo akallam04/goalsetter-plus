@@ -133,7 +133,7 @@ export default function Dashboard() {
   const handleNlDate = (text) => {
     setNlDate(text)
     if (!text.trim()) { setNlParsed(null); return }
-    const result = chrono.parseDate(text)
+    const result = chrono.parseDate(text, new Date(), { forwardDate: true })
     setNlParsed(result)
     if (result) {
       setDueDate(result.toLocaleDateString('en-CA'))
@@ -257,7 +257,7 @@ export default function Dashboard() {
   const handleToggle = async (g) => {
     const next = g.status === 'active' ? 'completed' : 'active'
     await dispatch(updateGoal({ id: g._id, updates: { status: next } }))
-
+    if (next === 'completed') dispatch(fetchAnalytics(analyticsDays))
     showToast(next === 'completed' ? 'Marked as complete!' : 'Goal reopened')
   }
 
@@ -437,102 +437,92 @@ export default function Dashboard() {
 
         {/* ── Goals tab ── */}
         {activeTab === 'goals' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: 16, alignItems: 'start' }} className="main-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: 16, alignItems: 'start' }} className="main-grid">
 
-            {/* LEFT: Add Goal + Filter & Sort */}
-            <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
-
-              <div className="card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 14 }}>
-                  <div className="section-title">Add a Goal</div>
-                  <div style={{ color: 'var(--muted2)', fontSize: 12 }}>Clear, specific, achievable</div>
-                </div>
-                <form onSubmit={addGoal} style={{ display: 'grid', gap: 12 }}>
-                  <div>
-                    <label className="label">What do you want to achieve?</label>
-                    <input
-                      ref={titleInputRef}
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g., Ship my portfolio project by end of month"
-                    />
-                  </div>
-                  <div className="form-grid-3">
-                    <div>
-                      <label className="label">Category</label>
-                      <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g., Career" />
-                    </div>
-                    <div>
-                      <label className="label">Priority</label>
-                      <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="label">Due Date</label>
-                      <input type="date" value={dueDate} onChange={(e) => { setDueDate(e.target.value); setNlDate(''); setNlParsed(null) }} />
-                      <input
-                        value={nlDate}
-                        onChange={(e) => handleNlDate(e.target.value)}
-                        placeholder='or type "next Friday"'
-                        style={{ marginTop: 6, fontSize: 12, padding: '7px 10px' }}
-                      />
-                      {nlDate && (
-                        <div style={{ fontSize: 11, marginTop: 4, color: nlParsed ? '#6ee7b7' : '#fca5a5' }}>
-                          {nlParsed ? `→ ${nlParsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : "Couldn't parse date"}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                    {error ? <div style={{ color: '#fca5a5', fontSize: 13 }}>{error}</div> : <div />}
-                    <button type="submit" className="btn-primary" style={{ padding: '11px 28px', fontWeight: 700, fontSize: 15 }} disabled={createStatus === 'loading'}>
-                      {createStatus === 'loading' ? 'Adding…' : '+ Add Goal'}
-                    </button>
-                  </div>
-                </form>
+            {/* LEFT: Add Goal only */}
+            <div className="card" style={{ alignSelf: 'start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, marginBottom: 14 }}>
+                <div className="section-title">Add a Goal</div>
+                <div style={{ color: 'var(--muted2)', fontSize: 12 }}>Clear, specific, achievable</div>
               </div>
-
-              <div className="card" style={{ display: 'grid', gap: 14, alignContent: 'start' }}>
-                <div className="section-title">Filter &amp; Sort</div>
+              <form onSubmit={addGoal} style={{ display: 'grid', gap: 12 }}>
                 <div>
-                  <label className="label">Status</label>
-                  <div className="filter-group">
+                  <label className="label">What do you want to achieve?</label>
+                  <input
+                    ref={titleInputRef}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g., Ship my portfolio project by end of month"
+                  />
+                </div>
+                <div className="form-grid-3">
+                  <div>
+                    <label className="label">Category</label>
+                    <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g., Career" />
+                  </div>
+                  <div>
+                    <label className="label">Priority</label>
+                    <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Due Date</label>
+                    <input type="date" value={dueDate} onChange={(e) => { setDueDate(e.target.value); setNlDate(''); setNlParsed(null) }} />
+                    <input
+                      value={nlDate}
+                      onChange={(e) => handleNlDate(e.target.value)}
+                      placeholder='or type "next Friday"'
+                      style={{ marginTop: 6, fontSize: 12, padding: '7px 10px' }}
+                    />
+                    {nlDate && (
+                      <div style={{ fontSize: 11, marginTop: 4, color: nlParsed ? '#6ee7b7' : '#fca5a5' }}>
+                        {nlParsed ? `→ ${nlParsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : "Couldn't parse date"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  {error ? <div style={{ color: '#fca5a5', fontSize: 13 }}>{error}</div> : <div />}
+                  <button type="submit" className="btn-primary" style={{ padding: '11px 28px', fontWeight: 700, fontSize: 15 }} disabled={createStatus === 'loading'}>
+                    {createStatus === 'loading' ? 'Adding…' : '+ Add Goal'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* RIGHT: Goals list with inline filters */}
+            <div className="card" style={{ alignSelf: 'start' }}>
+              {/* Filter toolbar */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, marginBottom: 14 }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div className="filter-group" style={{ flexShrink: 0 }}>
                     {['all', 'active', 'completed'].map((f) => (
-                      <button key={f} className={`filter-btn${filter === f ? ' active' : ''}`} onClick={() => dispatch(setFilter(f))} style={{ textTransform: 'capitalize' }}>
+                      <button key={f} className={`filter-btn${filter === f ? ' active' : ''}`} onClick={() => dispatch(setFilter(f))} style={{ textTransform: 'capitalize', padding: '5px 12px', fontSize: 12 }}>
                         {f}
                       </button>
                     ))}
                   </div>
-                </div>
-                <div>
-                  <label className="label">Search</label>
-                  <div className="search-wrap">
+                  <div className="search-wrap" style={{ flex: 1, minWidth: 120 }}>
                     <span className="search-icon">⌕</span>
-                    <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title…" />
+                    <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search…" style={{ padding: '7px 10px 7px 32px', fontSize: 12 }} />
                   </div>
                 </div>
-                <div>
-                  <label className="label">Sort by</label>
-                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                    <option value="newest">Newest first</option>
-                    <option value="oldest">Oldest first</option>
-                    <option value="dueSoon">Due date (soonest)</option>
-                    <option value="priorityHigh">Priority (high → low)</option>
-                  </select>
-                </div>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ width: 'auto', padding: '7px 10px', fontSize: 12 }}>
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="dueSoon">Due soon</option>
+                  <option value="priorityHigh">Priority ↓</option>
+                </select>
               </div>
-            </div>
 
-            {/* RIGHT: Goals list */}
-            <div className="card" style={{ alignSelf: 'start' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                <div className="section-title">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <div className="section-title" style={{ fontSize: 15 }}>
                   Your Goals
                   {visibleGoals.length > 0 && (
-                    <span style={{ color: 'var(--muted2)', fontWeight: 400, fontSize: 14, marginLeft: 8 }}>
+                    <span style={{ color: 'var(--muted2)', fontWeight: 400, fontSize: 13, marginLeft: 8 }}>
                       ({visibleGoals.length})
                     </span>
                   )}
