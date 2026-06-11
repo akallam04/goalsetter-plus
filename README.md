@@ -14,6 +14,7 @@ The v2 interface is a custom "mission control" design system built from scratch 
 - Space Grotesk for UI, JetBrains Mono for data readouts (tabular numerals throughout)
 - Custom SVG icon set, status LEDs, corner-tick panels, an animated radar on the auth pages
 - 3D ambience: perspective horizon grid, CSS 3D gyroscope ornament, cursor-tracking spotlight
+- Claude mascot: a floating coral starburst toy on the AI Coach tab, with matching coral accents for everything Claude generates
 - Desktop app frame: header, telemetry, and tabs stay fixed while only the content pane scrolls
 - No chart library: the area chart, contribution heatmap, and progress rings are hand-built SVG
 - Fully responsive: bottom tab navigation, floating action button, and bottom-sheet forms on mobile, with safe-area insets and 44px touch targets
@@ -44,6 +45,7 @@ The v2 interface is a custom "mission control" design system built from scratch 
 
 ### AI Coach (Claude API)
 - Describe an intent in plain English; Claude Haiku returns 3 SMART goals
+- Claude-branded experience: coral mascot, "Claude is thinking" scanner, generated-by-Claude tags
 - Quick-prompt chips for one-tap inspiration
 - One tap adds any suggestion to your board with a computed due date
 - Rate limited server-side to control API cost
