@@ -1,23 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import axios from 'axios'
-
-const PRIORITY_COLOR = { high: '#fca5a5', medium: '#fcd34d', low: '#6ee7b7' }
-
-const formatDate = (value) => {
-  if (!value) return null
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return null
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'America/Denver' })
-}
+import ProgressRing from '../components/ProgressRing'
+import { IconTarget } from '../components/icons'
+import { formatDate } from '../lib/dates'
 
 export default function SharedView() {
   const { token } = useParams()
-  const [data, setData]     = useState(null)
-  const [error, setError]   = useState(null)
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    document.title = 'Goalsetter+ | Shared board'
     axios
       .get(`${import.meta.env.VITE_API_URL}/share/${token}`)
       .then((res) => setData(res.data))
@@ -25,87 +20,122 @@ export default function SharedView() {
       .finally(() => setLoading(false))
   }, [token])
 
-  const active    = data?.goals.filter((g) => g.status === 'active')    ?? []
+  const active = data?.goals.filter((g) => g.status === 'active') ?? []
   const completed = data?.goals.filter((g) => g.status === 'completed') ?? []
+  const rate = data?.goals.length > 0 ? Math.round((completed.length / data.goals.length) * 100) : 0
 
   return (
-    <div style={{ minHeight: '100vh', padding: '32px 20px' }}>
-      <div style={{ width: '100%', maxWidth: 720, margin: '0 auto', display: 'grid', gap: 20 }}>
+    <div className="page">
+      <div className="shell" style={{ maxWidth: 760 }}>
 
-        {/* Header */}
-        <div>
-          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>
-            Goalsetter<span style={{ color: 'var(--accent-light)' }}>+</span>
-          </div>
-          {loading && <div style={{ marginTop: 40, textAlign: 'center', color: 'var(--muted)' }}>Loading…</div>}
-          {error   && <div style={{ marginTop: 40, textAlign: 'center', color: '#fca5a5' }}>{error}</div>}
-          {data && (
-            <div style={{ marginTop: 8, color: 'var(--muted)', fontSize: 15 }}>
-              <span style={{ color: 'var(--text)', fontWeight: 700 }}>{data.ownerName}</span>'s goals
-              <span style={{ color: 'var(--muted2)', fontSize: 13, marginLeft: 10 }}>— read only</span>
+        <div className="topbar">
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <div className="brand">
+              <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
+                <circle cx="16" cy="16" r="10" fill="none" stroke="var(--acc)" strokeWidth="2.4" />
+                <circle cx="16" cy="16" r="3.6" fill="var(--acc)" />
+                <path d="M16 1.5v5M16 25.5v5M1.5 16h5M25.5 16h5" stroke="var(--acc)" strokeWidth="2.4" strokeLinecap="round" />
+              </svg>
+              <span>Goalsetter<span className="plus">+</span></span>
             </div>
-          )}
+          </Link>
+          <span className="chip">READ ONLY</span>
         </div>
+
+        {loading && (
+          <div style={{ display: 'grid', gap: 10 }}>
+            <div className="skel" style={{ height: 80 }} />
+            <div className="skel" style={{ height: 200 }} />
+          </div>
+        )}
+
+        {error && (
+          <div className="panel">
+            <div className="empty">
+              <IconTarget size={34} />
+              <div className="empty-title">Link offline</div>
+              <div className="empty-sub">{error}</div>
+            </div>
+          </div>
+        )}
 
         {data && (
           <>
-            {/* Stats row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-              {[
-                { label: 'Total',     value: data.goals.length,  color: 'var(--accent-light)' },
-                { label: 'Active',    value: active.length,      color: 'var(--cyan-light)'   },
-                { label: 'Completed', value: completed.length,   color: '#6ee7b7'             },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="stat-card">
-                  <div className="stat-number" style={{ color }}>{value}</div>
-                  <div className="stat-label">{label}</div>
-                </div>
-              ))}
+            <div className="top-sub" style={{ marginTop: -4 }}>
+              <span>BOARD OWNER: {data.ownerName?.toUpperCase()}</span>
+              <span className="sep">/</span>
+              <span>{data.goals.length} GOALS</span>
             </div>
 
-            {/* Active goals */}
+            <div className="telemetry telemetry-4">
+              <div className="t-cell">
+                <span className="t-num">{data.goals.length}</span>
+                <span className="t-lbl">Total</span>
+              </div>
+              <div className="t-cell">
+                <span className="t-num" style={{ color: 'var(--acc)' }}>{active.length}</span>
+                <span className="t-lbl"><span className="led" />Active</span>
+              </div>
+              <div className="t-cell">
+                <span className="t-num">{completed.length}</span>
+                <span className="t-lbl">Done</span>
+              </div>
+              <div className="t-cell" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <ProgressRing value={rate} size={42} stroke={4} />
+                <span className="t-lbl">Rate</span>
+              </div>
+            </div>
+
             {active.length > 0 && (
-              <div className="card">
-                <div className="section-title" style={{ marginBottom: 12 }}>Active Goals ({active.length})</div>
-                <div style={{ display: 'grid', gap: 10 }}>
-                  {active.map((g) => (
-                    <div key={g._id} className={`goal-card priority-${g.priority}`}>
-                      <div style={{ flex: 1 }}>
-                        <div className="goal-title">{g.title}</div>
-                        {g.description && (
-                          <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{g.description}</div>
-                        )}
-                        <div className="goal-meta">
-                          <span className={`badge badge-${g.priority}`}>{g.priority}</span>
-                          <span className="badge badge-default">{g.category}</span>
-                          {g.dueDate && (
-                            <span className="badge badge-default">{formatDate(g.dueDate)}</span>
-                          )}
-                          {g.subtasks?.length > 0 && (
-                            <span className="badge badge-default">
-                              {g.subtasks.filter((s) => s.completed).length}/{g.subtasks.length} subtasks
-                            </span>
+              <div className="panel">
+                <div className="panel-head">
+                  <div className="section-title">Active Goals</div>
+                  <span className="mono-label">{active.length} OPEN</span>
+                </div>
+                <div style={{ display: 'grid', gap: 9 }}>
+                  {active.map((g) => {
+                    const subs = g.subtasks || []
+                    const subsDone = subs.filter((s) => s.completed).length
+                    return (
+                      <div key={g._id} className={`gcard p-${g.priority}`}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="gcard-title">{g.title}</div>
+                          {g.description && <div className="gcard-desc">{g.description}</div>}
+                          <div className="gcard-meta">
+                            <span className={`chip chip-${g.priority}`}><span className="dot" />{g.priority}</span>
+                            <span className="chip">{g.category}</span>
+                            {g.dueDate && <span className="chip">{formatDate(g.dueDate)}</span>}
+                          </div>
+                          {subs.length > 0 && (
+                            <div className="sub-progress">
+                              <div className="track">
+                                <div className="fill" style={{ width: `${(subsDone / subs.length) * 100}%` }} />
+                              </div>
+                              <span className="txt">{subsDone}/{subs.length} SUBTASKS</span>
+                            </div>
                           )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Completed goals */}
             {completed.length > 0 && (
-              <div className="card">
-                <div className="section-title" style={{ marginBottom: 12 }}>Completed ({completed.length})</div>
-                <div style={{ display: 'grid', gap: 10 }}>
+              <div className="panel">
+                <div className="panel-head">
+                  <div className="section-title">Completed</div>
+                  <span className="mono-label">{completed.length} DONE</span>
+                </div>
+                <div style={{ display: 'grid', gap: 9 }}>
                   {completed.map((g) => (
-                    <div key={g._id} className="goal-card priority-low completed">
-                      <div style={{ flex: 1 }}>
-                        <div className="goal-title">{g.title}</div>
-                        <div className="goal-meta">
-                          <span className="badge badge-completed">✓ done</span>
-                          <span className="badge badge-default">{g.category}</span>
+                    <div key={g._id} className="gcard p-low done">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="gcard-title">{g.title}</div>
+                        <div className="gcard-meta">
+                          <span className="chip chip-done">done</span>
+                          <span className="chip">{g.category}</span>
                         </div>
                       </div>
                     </div>
@@ -115,19 +145,20 @@ export default function SharedView() {
             )}
 
             {data.goals.length === 0 && (
-              <div className="empty-state">
-                <div className="empty-icon">🎯</div>
-                <div>No goals shared yet.</div>
+              <div className="panel">
+                <div className="empty">
+                  <IconTarget size={34} />
+                  <div className="empty-title">Nothing shared yet</div>
+                  <div className="empty-sub">This board is empty for now.</div>
+                </div>
               </div>
             )}
           </>
         )}
 
-        <div style={{ textAlign: 'center', color: 'var(--muted2)', fontSize: 13, marginTop: 8 }}>
-          Want to track your own goals?{' '}
-          <Link to="/register" style={{ color: 'var(--accent-light)', textDecoration: 'underline' }}>
-            Get started free
-          </Link>
+        <div style={{ textAlign: 'center', color: 'var(--dim)', fontSize: 13, marginTop: 6 }}>
+          Want a board like this?{' '}
+          <Link to="/register" style={{ color: 'var(--acc)' }}>Start tracking free</Link>
         </div>
       </div>
     </div>
