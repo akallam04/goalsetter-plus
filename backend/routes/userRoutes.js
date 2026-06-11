@@ -1,6 +1,6 @@
 import express from 'express'
 import { body } from 'express-validator'
-import { authUser, registerUser, getMe } from '../controllers/userController.js'
+import { authUser, registerUser, getMe, updateMe } from '../controllers/userController.js'
 import { protect } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
@@ -21,5 +21,14 @@ router.post(
 )
 
 router.get('/me', protect, getMe)
+
+router.put(
+  '/me',
+  protect,
+  body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
+  body('email').optional().isEmail().withMessage('Valid email is required'),
+  body('newPassword').optional().isLength({ min: 6 }).withMessage('New password must be at least 6 chars'),
+  updateMe
+)
 
 export default router

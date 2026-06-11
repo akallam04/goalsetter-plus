@@ -142,3 +142,24 @@ export const IconRadar = (p) => (
     <circle cx="12" cy="12" r="0.5" fill="currentColor" />
   </Icon>
 )
+
+export const IconUser = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
+  </Icon>
+)
+
+export const IconCamera = (p) => (
+  <Icon {...p}>
+    <path d="M3 8a2 2 0 0 1 2-2h2l1.5-2.5h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" />
+    <circle cx="12" cy="13" r="3.5" />
+  </Icon>
+)
+
+export const IconLock = (p) => (
+  <Icon {...p}>
+    <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
+    <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+  </Icon>
+)

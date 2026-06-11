@@ -22,6 +22,15 @@ export const login = createAsyncThunk('auth/login', async (payload, thunkAPI) =>
   }
 })
 
+export const updateProfile = createAsyncThunk('auth/updateProfile', async (payload, thunkAPI) => {
+  try {
+    const { data } = await client.put('/users/me', payload)
+    return data
+  } catch (err) {
+    return thunkAPI.rejectWithValue(err.response?.data?.message || err.message)
+  }
+})
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: { user: initialAuth.user, token: initialAuth.token, status: 'idle', error: null },
@@ -38,7 +47,12 @@ const authSlice = createSlice({
     const fulfilled = (state, action) => {
       state.status = 'succeeded'
       state.error = null
-      state.user = { _id: action.payload._id, name: action.payload.name, email: action.payload.email }
+      state.user = {
+        _id: action.payload._id,
+        name: action.payload.name,
+        email: action.payload.email,
+        avatar: action.payload.avatar || '',
+      }
       state.token = action.payload.token
       localStorage.setItem('auth', JSON.stringify({ user: state.user, token: state.token }))
     }
@@ -61,6 +75,15 @@ const authSlice = createSlice({
       .addCase(login.rejected, (state, action) => {
         state.status = 'failed'
         state.error = action.payload
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.user = {
+          _id: action.payload._id,
+          name: action.payload.name,
+          email: action.payload.email,
+          avatar: action.payload.avatar || '',
+        }
+        localStorage.setItem('auth', JSON.stringify({ user: state.user, token: state.token }))
       })
   },
 })

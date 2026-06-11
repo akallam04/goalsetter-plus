@@ -12,6 +12,7 @@ import EditGoalModal from '../components/EditGoalModal'
 import AnalyticsTab from '../components/AnalyticsTab'
 import AiCoachTab from '../components/AiCoachTab'
 import ShareTab from '../components/ShareTab'
+import ProfileModal from '../components/ProfileModal'
 import ProgressRing from '../components/ProgressRing'
 import {
   IconChart, IconFlame, IconLink, IconLogout, IconPlus,
@@ -19,10 +20,10 @@ import {
 } from '../components/icons'
 
 const TABS = [
-  { id: 'goals', label: 'Goals', Icon: IconTarget },
-  { id: 'analytics', label: 'Analytics', Icon: IconChart },
-  { id: 'ai', label: 'AI Coach', Icon: IconSpark },
-  { id: 'share', label: 'Share', Icon: IconLink },
+  { id: 'goals', label: 'Goals', desc: 'Plan and track your board', Icon: IconTarget },
+  { id: 'analytics', label: 'Analytics', desc: 'Streaks, momentum, trends', Icon: IconChart },
+  { id: 'ai', label: 'AI Coach', desc: 'Claude builds SMART goals', Icon: IconSpark },
+  { id: 'share', label: 'Share', desc: 'Public read-only link', Icon: IconLink },
 ]
 
 const PRIORITY_RANK = { high: 3, medium: 2, low: 1 }
@@ -81,11 +82,24 @@ export default function Dashboard() {
   const [justDoneId, setJustDoneId] = useState(null)
   const [editing, setEditing] = useState(null)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   const titleInputRef = useRef(null)
   const searchInputRef = useRef(null)
   const toastTimer = useRef(null)
   const doneTimer = useRef(null)
+  const pageRef = useRef(null)
+  const spotRaf = useRef(0)
+
+  // Cursor spotlight: writes CSS vars directly, no re-renders
+  const onSpotlight = (e) => {
+    const { clientX, clientY } = e
+    cancelAnimationFrame(spotRaf.current)
+    spotRaf.current = requestAnimationFrame(() => {
+      pageRef.current?.style.setProperty('--mx', `${clientX}px`)
+      pageRef.current?.style.setProperty('--my', `${clientY}px`)
+    })
+  }
 
   useEffect(() => {
     document.title = 'Goalsetter+ | Dashboard'
@@ -96,6 +110,7 @@ export default function Dashboard() {
   useEffect(() => () => {
     clearTimeout(toastTimer.current)
     clearTimeout(doneTimer.current)
+    cancelAnimationFrame(spotRaf.current)
   }, [])
 
   const showToast = useCallback((msg, type = 'success') => {
@@ -226,7 +241,7 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="page">
+    <div className="page app-frame" ref={pageRef} onMouseMove={onSpotlight}>
       <div className="shell">
 
         {/* Top bar */}
@@ -253,7 +268,14 @@ export default function Dashboard() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Clock />
-            <div className="avatar" title={user?.name}>{initials}</div>
+            <button
+              className="avatar avatar-btn"
+              onClick={() => setProfileOpen(true)}
+              aria-label="Edit profile"
+              title="Edit profile"
+            >
+              {user?.avatar ? <img src={user.avatar} alt="" /> : initials}
+            </button>
             <button className="icon-btn" onClick={() => dispatch(logout())} aria-label="Sign out" title="Sign out">
               <IconLogout size={17} />
             </button>
@@ -302,28 +324,21 @@ export default function Dashboard() {
               className={`seg-btn${activeTab === t.id ? ' active' : ''}`}
               onClick={() => switchTab(t.id)}
             >
-              <t.Icon size={15} /> {t.label}
+              <span className="ic"><t.Icon size={17} /></span>
+              <span className="seg-txt">
+                <span className="lbl">{t.label}</span>
+                <span className="dsc">{t.desc}</span>
+              </span>
             </button>
           ))}
         </div>
 
-        {/* Goals */}
-        {activeTab === 'goals' && (
-          <div className="pane" style={{ display: 'grid', gap: 14 }}>
-            {stats.overdue > 0 && filter !== 'active' && (
-              <button
-                className="alert-strip"
-                onClick={() => { dispatch(setFilter('active')); setSortBy('smart') }}
-              >
-                <span className="led red pulse" />
-                {stats.overdue} {stats.overdue === 1 ? 'GOAL NEEDS' : 'GOALS NEED'} ATTENTION
-                <span style={{ marginLeft: 'auto', opacity: 0.75 }}>REVIEW</span>
-              </button>
-            )}
-
-            <div className="goals-grid">
+        <div className="tab-viewport">
+          {/* Goals */}
+          {activeTab === 'goals' && (
+            <div className="pane goals-grid">
               {/* New goal: desktop panel */}
-              <div className="panel panel-tick desktop-only" style={{ position: 'sticky', top: 18 }}>
+              <div className="panel panel-tick desktop-only gform-panel">
                 <div className="panel-head" style={{ marginBottom: 14 }}>
                   <div>
                     <div className="mono-label" style={{ marginBottom: 3 }}>New entry</div>
@@ -340,44 +355,54 @@ export default function Dashboard() {
               </div>
 
               {/* Goal list */}
-              <div className="panel">
-                <div style={{ display: 'grid', gap: 10, marginBottom: 14 }}>
-                  <div className="filter-row">
-                    {filterPills.map((f) => (
-                      <button
-                        key={f.id}
-                        className={`pill${filter === f.id ? ' active' : ''}`}
-                        onClick={() => dispatch(setFilter(f.id))}
-                      >
-                        {f.label}<span className="count">{f.count}</span>
-                      </button>
-                    ))}
-                    <div className="search-wrap">
-                      <IconSearch size={14} />
-                      <input
-                        ref={searchInputRef}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search goals"
-                        aria-label="Search goals"
-                      />
-                    </div>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      aria-label="Sort goals"
-                      style={{ width: 'auto', padding: '7px 11px', fontSize: 12.5 }}
+              <div className="panel glist-panel">
+                {stats.overdue > 0 && filter !== 'active' && (
+                  <button
+                    className="alert-strip"
+                    style={{ marginBottom: 12 }}
+                    onClick={() => { dispatch(setFilter('active')); setSortBy('smart') }}
+                  >
+                    <span className="led red pulse" />
+                    {stats.overdue} {stats.overdue === 1 ? 'GOAL NEEDS' : 'GOALS NEED'} ATTENTION
+                    <span style={{ marginLeft: 'auto', opacity: 0.75 }}>REVIEW</span>
+                  </button>
+                )}
+
+                <div className="filter-row" style={{ marginBottom: 14 }}>
+                  {filterPills.map((f) => (
+                    <button
+                      key={f.id}
+                      className={`pill${filter === f.id ? ' active' : ''}`}
+                      onClick={() => dispatch(setFilter(f.id))}
                     >
-                      <option value="smart">Smart sort</option>
-                      <option value="newest">Newest</option>
-                      <option value="oldest">Oldest</option>
-                      <option value="dueSoon">Due soon</option>
-                      <option value="priorityHigh">Priority</option>
-                    </select>
+                      {f.label}<span className="count">{f.count}</span>
+                    </button>
+                  ))}
+                  <div className="search-wrap">
+                    <IconSearch size={14} />
+                    <input
+                      ref={searchInputRef}
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search goals"
+                      aria-label="Search goals"
+                    />
                   </div>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    aria-label="Sort goals"
+                    style={{ width: 'auto', padding: '7px 11px', fontSize: 12.5 }}
+                  >
+                    <option value="smart">Smart sort</option>
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                    <option value="dueSoon">Due soon</option>
+                    <option value="priorityHigh">Priority</option>
+                  </select>
                 </div>
 
-                <div style={{ display: 'grid', gap: 9 }}>
+                <div className="glist-scroll">
                   {listStatus === 'loading' && items.length === 0 && (
                     <>
                       <div className="skel" style={{ height: 86 }} />
@@ -416,26 +441,26 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Analytics */}
-        {activeTab === 'analytics' && (
-          <div className="pane"><AnalyticsTab /></div>
-        )}
+          {/* Analytics */}
+          {activeTab === 'analytics' && (
+            <div className="pane pane-scroll"><AnalyticsTab /></div>
+          )}
 
-        {/* AI Coach */}
-        {activeTab === 'ai' && (
-          <div className="pane"><AiCoachTab onToast={showToast} /></div>
-        )}
+          {/* AI Coach */}
+          {activeTab === 'ai' && (
+            <div className="pane pane-scroll"><AiCoachTab onToast={showToast} /></div>
+          )}
 
-        {/* Share */}
-        {activeTab === 'share' && (
-          <div className="pane"><ShareTab onToast={showToast} /></div>
-        )}
+          {/* Share */}
+          {activeTab === 'share' && (
+            <div className="pane pane-scroll"><ShareTab onToast={showToast} /></div>
+          )}
+        </div>
 
         <div
-          className="mono"
+          className="mono mobile-only"
           style={{ textAlign: 'center', fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--dim)', marginTop: 14 }}
         >
           GOALSETTER+ V2 · REACT 19 · CLAUDE AI
@@ -493,6 +518,15 @@ export default function Dashboard() {
           goal={editing}
           onClose={() => setEditing(null)}
           onSave={handleSaveEdit}
+        />
+      )}
+
+      {/* Profile modal */}
+      {profileOpen && user && (
+        <ProfileModal
+          user={user}
+          onClose={() => setProfileOpen(false)}
+          onToast={showToast}
         />
       )}
 

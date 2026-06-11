@@ -13,6 +13,8 @@ The v2 interface is a custom "mission control" design system built from scratch 
 - Graphite surfaces with hairline borders and a single lime signal color
 - Space Grotesk for UI, JetBrains Mono for data readouts (tabular numerals throughout)
 - Custom SVG icon set, status LEDs, corner-tick panels, an animated radar on the auth pages
+- 3D ambience: perspective horizon grid, CSS 3D gyroscope ornament, cursor-tracking spotlight
+- Desktop app frame: header, telemetry, and tabs stay fixed while only the content pane scrolls
 - No chart library: the area chart, contribution heatmap, and progress rings are hand-built SVG
 - Fully responsive: bottom tab navigation, floating action button, and bottom-sheet forms on mobile, with safe-area insets and 44px touch targets
 
@@ -20,6 +22,7 @@ The v2 interface is a custom "mission control" design system built from scratch 
 
 ### Core
 - JWT authentication: register, login, protected routes, auto-logout on token expiry
+- Profile editing: name, email, password change, and a profile photo uploaded from your device (resized client-side to a compact data URL)
 - Full goals CRUD with status toggle, sub-tasks, notes, and priorities
 - Due dates with overdue detection and countdown chips ("3d left", "due today")
 - Natural language date input: type "next friday" or "in 2 weeks" and it locks in automatically
@@ -82,6 +85,7 @@ The v2 interface is a custom "mission control" design system built from scratch 
 POST   /api/users          Register
 POST   /api/users/login    Login
 GET    /api/users/me       Get current user
+PUT    /api/users/me       Update profile (name, email, avatar, password)
 ```
 
 **Goals** (protected)

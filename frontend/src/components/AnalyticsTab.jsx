@@ -13,7 +13,7 @@ function Readout({ label, children, accent }) {
     <div
       style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '11px 2px', borderBottom: '1px solid var(--line)', gap: 10,
+        padding: '8px 2px', borderBottom: '1px solid var(--line)', gap: 10,
       }}
     >
       <span className="mono-label">{label}</span>
@@ -67,10 +67,13 @@ export default function AnalyticsTab() {
     )
   }
 
+  const activeDays = analytics.completionsByDay.length
+  const peakDay = analytics.completionsByDay.reduce((max, d) => Math.max(max, d.count), 0)
+
   return (
-    <div style={{ display: 'grid', gap: 14 }}>
+    <div className="an-stack">
       <div className="an-grid">
-        <div className="panel">
+        <div className="panel an-flex">
           <div className="panel-head">
             <div>
               <div className="mono-label" style={{ marginBottom: 3 }}>Last 13 weeks</div>
@@ -78,7 +81,14 @@ export default function AnalyticsTab() {
             </div>
             <span className="chip chip-acc">{total90} IN 90D</span>
           </div>
-          <Heatmap dayMap={dayMap} />
+          <div className="an-center">
+            <Heatmap dayMap={dayMap} />
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+            <span className="chip">ACTIVE DAYS {activeDays}/90</span>
+            <span className="chip">PEAK {peakDay}/DAY</span>
+            <span className="chip">AVG {(total90 / 90).toFixed(1)}/DAY</span>
+          </div>
         </div>
 
         <div className="panel">
@@ -87,7 +97,7 @@ export default function AnalyticsTab() {
               <div className="mono-label" style={{ marginBottom: 3 }}>Telemetry</div>
               <div className="section-title">Performance</div>
             </div>
-            <ProgressRing value={rate} />
+            <ProgressRing value={rate} size={46} />
           </div>
           <Readout label="Current streak" accent={streak > 0 ? 'var(--acc)' : 'var(--dim)'}>
             {streak > 0 && <IconFlame size={14} />}
@@ -101,7 +111,7 @@ export default function AnalyticsTab() {
       </div>
 
       <div className="an-grid-2">
-        <div className="panel">
+        <div className="panel an-flex">
           <div className="panel-head">
             <div className="section-title">Completions</div>
             <div className="filter-row">
@@ -117,7 +127,9 @@ export default function AnalyticsTab() {
               ))}
             </div>
           </div>
-          <AreaChart data={points} height={230} />
+          <div className="an-center">
+            <AreaChart data={points} height={175} />
+          </div>
         </div>
 
         <div className="panel">
@@ -130,7 +142,7 @@ export default function AnalyticsTab() {
               <div className="empty-sub">Add goals to see the category split.</div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gap: 14 }}>
+            <div style={{ display: 'grid', gap: 9 }}>
               {analytics.byCategory.map((c) => (
                 <div className="catbar" key={c._id}>
                   <div className="row">

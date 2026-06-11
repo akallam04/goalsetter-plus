@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import client from '../api/client'
 import { createGoal } from '../features/goals/goalsSlice'
+import Gyro from './Gyro'
 import { IconCheck, IconPlus, IconSpark } from './icons'
 
 const QUICK_PROMPTS = [
@@ -102,7 +103,7 @@ export default function AiCoachTab({ onToast }) {
 
       {loading && (
         <div className="scanbox" style={{ marginTop: 16 }}>
-          <span className="led pulse" />
+          <Gyro size={34} />
           ANALYZING INTENT<span className="cursor-blink">_</span>
         </div>
       )}
