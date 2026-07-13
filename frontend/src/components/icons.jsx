@@ -163,3 +163,16 @@ export const IconLock = (p) => (
     <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
   </Icon>
 )
+
+export const IconSun = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="4.5" />
+    <path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" />
+  </Icon>
+)
+
+export const IconMoon = (p) => (
+  <Icon {...p}>
+    <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" />
+  </Icon>
+)

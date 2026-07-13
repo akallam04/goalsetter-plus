@@ -1,8 +1,13 @@
+import { ModeToggle } from './ThemeControls'
+
 // Split-panel auth shell: form on the left, animated radar visual
 // on the right (hidden on small screens).
 export default function AuthLayout({ children }) {
   return (
-    <div className="auth-page">
+    <div className="auth-page" style={{ position: 'relative' }}>
+      <div style={{ position: 'absolute', top: 16, right: 16 }}>
+        <ModeToggle />
+      </div>
       <div className="auth-wrap">
         <div className="auth-form-col">{children}</div>
 

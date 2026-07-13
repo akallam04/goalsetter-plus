@@ -10,7 +10,9 @@ A full-stack goal tracking system built with the MERN stack. Designed as a portf
 
 The v2 interface is a custom "mission control" design system built from scratch in plain CSS:
 
-- Graphite surfaces with hairline borders and a single lime signal color
+- Dark and light modes with four accent themes (Lime, Ice, Amber, Coral), all driven by CSS custom properties and color-mix
+- Flash-free theming: an inline head script applies the saved mode and accent before first paint, persisted in localStorage across refreshes
+- Graphite surfaces with hairline borders and a single signal color
 - Space Grotesk for UI, JetBrains Mono for data readouts (tabular numerals throughout)
 - Custom SVG icon set, status LEDs, corner-tick panels, an animated radar on the auth pages
 - 3D ambience: perspective horizon grid, CSS 3D gyroscope ornament, cursor-tracking spotlight

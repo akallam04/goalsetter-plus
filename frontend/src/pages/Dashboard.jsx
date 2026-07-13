@@ -14,6 +14,7 @@ import AiCoachTab from '../components/AiCoachTab'
 import ShareTab from '../components/ShareTab'
 import ProfileModal from '../components/ProfileModal'
 import ProgressRing from '../components/ProgressRing'
+import ThemeControls from '../components/ThemeControls'
 import {
   IconChart, IconFlame, IconLink, IconLogout, IconPlus,
   IconSearch, IconSpark, IconTarget, IconX,
@@ -267,6 +268,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <ThemeControls />
             <Clock />
             <button
               className="avatar avatar-btn"

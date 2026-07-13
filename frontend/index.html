@@ -2,6 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Flash-free theming: apply the saved mode and accent before first
+      // paint so a refresh never flickers or resets the look.
+      ;(function () {
+        var mode = 'dark'
+        var accent = 'lime'
+        try {
+          var saved = JSON.parse(localStorage.getItem('gs-theme') || '{}')
+          if (saved.mode === 'light') mode = 'light'
+          if (['lime', 'ice', 'amber', 'coral'].indexOf(saved.accent) !== -1) accent = saved.accent
+        } catch (e) { /* corrupted storage: fall back to defaults */ }
+        var root = document.documentElement
+        root.dataset.theme = mode
+        root.dataset.accent = accent
+        document.addEventListener('DOMContentLoaded', function () {
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.content = mode === 'light' ? '#f1f2ee' : '#07090c'
+        })
+      })()
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#07090c" />

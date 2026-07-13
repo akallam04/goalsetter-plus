@@ -127,12 +127,12 @@ export default function AnalyticsTab() {
               ))}
             </div>
           </div>
-          <div className="an-center">
-            <AreaChart data={points} height={175} />
+          <div className="chart-fill">
+            <AreaChart data={points} />
           </div>
         </div>
 
-        <div className="panel">
+        <div className="panel an-flex">
           <div className="panel-head">
             <div className="section-title">Categories</div>
             <span className="mono-label">DONE / TOTAL</span>
@@ -142,7 +142,7 @@ export default function AnalyticsTab() {
               <div className="empty-sub">Add goals to see the category split.</div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gap: 9 }}>
+            <div className="cat-list">
               {analytics.byCategory.map((c) => (
                 <div className="catbar" key={c._id}>
                   <div className="row">

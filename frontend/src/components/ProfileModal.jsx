@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { updateProfile } from '../features/auth/authSlice'
+import { AccentDots } from './ThemeControls'
 import { IconCamera, IconLock, IconUser, IconX } from './icons'
 
 const AVATAR_SIZE = 144
@@ -144,6 +145,12 @@ export default function ProfileModal({ user, onClose, onToast }) {
           <div>
             <label className="label">Email</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+
+          {/* Appearance: accent picker lives here on mobile */}
+          <div className="profile-appearance" style={{ borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+            <div className="mono-label" style={{ marginBottom: 10 }}>ACCENT COLOR</div>
+            <AccentDots />
           </div>
 
           {/* Password */}

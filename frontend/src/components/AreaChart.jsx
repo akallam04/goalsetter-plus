@@ -2,17 +2,24 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 const M = { top: 14, right: 10, bottom: 24, left: 30 }
 
-// Hand-rolled SVG area chart: lime line, soft gradient fill,
+// Hand-rolled SVG area chart: accent line, soft gradient fill,
 // pointer crosshair with a mono tooltip. No chart library needed.
-export default function AreaChart({ data, height = 240 }) {
+// Without a height prop it fills its parent (which must have one).
+export default function AreaChart({ data, height: fixedHeight }) {
   const wrapRef = useRef(null)
   const [width, setWidth] = useState(0)
+  const [measuredH, setMeasuredH] = useState(0)
   const [hover, setHover] = useState(null)
+
+  const height = fixedHeight ?? Math.max(measuredH, 140)
 
   useEffect(() => {
     const el = wrapRef.current
     if (!el) return
-    const ro = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width))
+    const ro = new ResizeObserver(([entry]) => {
+      setWidth(entry.contentRect.width)
+      setMeasuredH(entry.contentRect.height)
+    })
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
@@ -54,7 +61,13 @@ export default function AreaChart({ data, height = 240 }) {
   return (
     <div
       ref={wrapRef}
-      style={{ position: 'relative', width: '100%', height, touchAction: 'pan-y' }}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: fixedHeight ?? '100%',
+        minHeight: fixedHeight ? undefined : 140,
+        touchAction: 'pan-y',
+      }}
       onPointerMove={onMove}
       onPointerLeave={() => setHover(null)}
     >
@@ -62,8 +75,8 @@ export default function AreaChart({ data, height = 240 }) {
         <svg width={width} height={height} style={{ display: 'block' }} aria-hidden="true">
           <defs>
             <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(180,245,60,0.28)" />
-              <stop offset="100%" stopColor="rgba(180,245,60,0)" />
+              <stop offset="0%" stopColor="var(--acc)" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="var(--acc)" stopOpacity="0" />
             </linearGradient>
           </defs>
 

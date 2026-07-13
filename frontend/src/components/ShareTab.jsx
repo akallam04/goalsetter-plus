@@ -75,7 +75,7 @@ export default function ShareTab({ onToast }) {
                 style={{
                   padding: '12px 15px',
                   borderRadius: 'var(--r-s)',
-                  background: '#0a0d11',
+                  background: 'var(--input)',
                   border: '1px solid var(--acc-30)',
                   fontSize: 12.5,
                   color: 'var(--acc)',
