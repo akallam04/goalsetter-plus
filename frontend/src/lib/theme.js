@@ -3,8 +3,8 @@
 const KEY = 'gs-theme'
 
 export const ACCENTS = [
-  { id: 'lime', label: 'Lime' },
   { id: 'ice', label: 'Ice' },
+  { id: 'lime', label: 'Lime' },
   { id: 'amber', label: 'Amber' },
   { id: 'coral', label: 'Coral' },
 ]
@@ -13,7 +13,7 @@ export const readTheme = () => {
   const ds = document.documentElement.dataset
   return {
     mode: ds.theme === 'light' ? 'light' : 'dark',
-    accent: ACCENTS.some((a) => a.id === ds.accent) ? ds.accent : 'lime',
+    accent: ACCENTS.some((a) => a.id === ds.accent) ? ds.accent : 'ice',
   }
 }
 

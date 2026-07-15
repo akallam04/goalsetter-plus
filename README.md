@@ -4,13 +4,17 @@ A full-stack goal tracking system built with the MERN stack. Designed as a portf
 
 **Live Demo:** [goalsetter-plus.vercel.app](https://goalsetter-plus.vercel.app)
 
+Two ways in, no signup needed:
+- Hit **Try the live demo** on the sign-in page for a one-click, preloaded board (goals, streaks, analytics history)
+- Or view the [public demo board](https://goalsetter-plus.vercel.app/share/demoboard), the read-only share-link feature in action
+
 ---
 
 ## Design
 
 The v2 interface is a custom "mission control" design system built from scratch in plain CSS:
 
-- Dark and light modes with four accent themes (Lime, Ice, Amber, Coral), all driven by CSS custom properties and color-mix
+- Dark and light modes with four accent themes (Ice by default, plus Lime, Amber, Coral), all driven by CSS custom properties and color-mix
 - Flash-free theming: an inline head script applies the saved mode and accent before first paint, persisted in localStorage across refreshes
 - Graphite surfaces with hairline borders and a single signal color
 - Space Grotesk for UI, JetBrains Mono for data readouts (tabular numerals throughout)
@@ -142,6 +146,11 @@ ANTHROPIC_API_KEY=your_anthropic_key
 
 ```bash
 npm run dev
+```
+
+Optional: seed or reset the public demo account (used by the "Try the live demo" button):
+```bash
+npm run seed:demo
 ```
 
 ### 3. Frontend

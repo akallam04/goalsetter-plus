@@ -28,10 +28,10 @@
   --mut: #8c98a4;
   --dim: #5b6672;
 
-  /* Signal accent (overridden by data-accent, see theme blocks below) */
-  --acc: #b4f53c;
-  --acc-2: #d3ff6b;
-  --acc-ink: #10160a;
+  /* Signal accent: Ice is the default; data-accent swaps it */
+  --acc: #5fd4ff;
+  --acc-2: #8ee4ff;
+  --acc-ink: #04141c;
   --acc-08: color-mix(in srgb, var(--acc) 9%, transparent);
   --acc-15: color-mix(in srgb, var(--acc) 15%, transparent);
   --acc-30: color-mix(in srgb, var(--acc) 32%, transparent);
@@ -92,8 +92,8 @@
   --mut: #4d5964;
   --dim: #7e8994;
 
-  --acc: #4d7c0f;
-  --acc-2: #65a30d;
+  --acc: #0369a1;
+  --acc-2: #0284c7;
   --acc-ink: #ffffff;
 
   --claude: #c05a3c;
@@ -112,6 +112,17 @@
 }
 
 /* ---- Accent options (picked via data-accent, persisted) ---------- */
+:root[data-accent='lime'] {
+  --acc: #b4f53c;
+  --acc-2: #d3ff6b;
+  --acc-ink: #10160a;
+}
+:root[data-theme='light'][data-accent='lime'] {
+  --acc: #4d7c0f;
+  --acc-2: #65a30d;
+  --acc-ink: #ffffff;
+}
+
 :root[data-accent='ice'] {
   --acc: #5fd4ff;
   --acc-2: #8ee4ff;

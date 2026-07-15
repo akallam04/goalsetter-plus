@@ -3,10 +3,15 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../features/auth/authSlice'
 import AuthLayout, { AuthBrand } from '../components/AuthLayout'
+import { IconSpark } from '../components/icons'
+
+// Public by design: the demo account is seeded via backend/scripts/seed-demo.mjs
+const DEMO_CREDENTIALS = { email: 'demo@goalsetter.app', password: 'demo-goals-2026' }
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [demoClicked, setDemoClicked] = useState(false)
   const dispatch = useDispatch()
   const nav = useNavigate()
   const { token, status, error } = useSelector((s) => s.auth)
@@ -21,7 +26,13 @@ export default function Login() {
 
   const onSubmit = (e) => {
     e.preventDefault()
+    setDemoClicked(false)
     dispatch(login({ email, password }))
+  }
+
+  const tryDemo = () => {
+    setDemoClicked(true)
+    dispatch(login(DEMO_CREDENTIALS))
   }
 
   return (
@@ -62,9 +73,39 @@ export default function Login() {
           style={{ width: '100%', padding: 13, fontSize: 15, marginTop: 4 }}
           disabled={status === 'loading'}
         >
-          {status === 'loading' ? 'Authenticating...' : 'Sign in'}
+          {status === 'loading' && !demoClicked ? 'Authenticating...' : 'Sign in'}
         </button>
       </form>
+
+      {/* Instant access for visitors: no signup required */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0 14px' }}>
+        <span style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+        <span className="mono-label">OR</span>
+        <span style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+      </div>
+
+      <button
+        type="button"
+        className="btn-ghost-acc"
+        style={{
+          width: '100%', padding: 13, fontSize: 14.5,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+        }}
+        onClick={tryDemo}
+        disabled={status === 'loading'}
+      >
+        <IconSpark size={15} />
+        {status === 'loading' && demoClicked ? 'Loading demo board...' : 'Try the live demo'}
+      </button>
+      <div
+        className="mono"
+        style={{
+          marginTop: 9, textAlign: 'center', fontSize: 9.5,
+          letterSpacing: '0.12em', color: 'var(--dim)',
+        }}
+      >
+        ONE CLICK · PRELOADED BOARD · NO SIGNUP
+      </div>
 
       {error && (
         <div
