@@ -181,3 +181,9 @@ Open [http://localhost:5173](http://localhost:5173)
 - **Axios request interceptor.** The JWT attaches in one place instead of being threaded through every thunk and call site.
 - **Timezone-pinned day math.** Streaks, overdue checks, and heatmap cells all use the same timezone as the backend aggregation, so day boundaries always agree.
 - **`forwardDate: true` in chrono-node.** "Sunday" always means the next upcoming Sunday, never yesterday.
+
+---
+
+## License
+
+[MIT](LICENSE)
