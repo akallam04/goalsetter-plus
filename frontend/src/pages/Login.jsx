@@ -84,19 +84,21 @@ export default function Login() {
         <span style={{ flex: 1, height: 1, background: 'var(--line)' }} />
       </div>
 
-      <button
-        type="button"
-        className="btn-ghost-acc"
-        style={{
-          width: '100%', padding: 13, fontSize: 14.5,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-        }}
-        onClick={tryDemo}
-        disabled={status === 'loading'}
-      >
-        <IconSpark size={15} />
-        {status === 'loading' && demoClicked ? 'Loading demo board...' : 'Try the live demo'}
-      </button>
+      <div className="beam-wrap">
+        <button
+          type="button"
+          className="btn-ghost-acc"
+          style={{
+            width: '100%', padding: 13, fontSize: 14.5,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+          }}
+          onClick={tryDemo}
+          disabled={status === 'loading'}
+        >
+          <IconSpark size={15} />
+          {status === 'loading' && demoClicked ? 'Loading demo board...' : 'Try the live demo'}
+        </button>
+      </div>
       <div
         className="mono"
         style={{

@@ -1,13 +1,16 @@
-import { ModeToggle } from './ThemeControls'
+import { IconChart, IconLink, IconSpark } from './icons'
+
+const FEATURES = [
+  { Icon: IconSpark, title: 'AI coach powered by Claude', sub: 'Plain English in, SMART goals out' },
+  { Icon: IconChart, title: 'Streak and momentum analytics', sub: '13-week heatmap, hand-built in SVG' },
+  { Icon: IconLink, title: 'Shareable accountability links', sub: 'Read-only public board, revocable anytime' },
+]
 
 // Split-panel auth shell: form on the left, animated radar visual
 // on the right (hidden on small screens).
 export default function AuthLayout({ children }) {
   return (
-    <div className="auth-page" style={{ position: 'relative' }}>
-      <div style={{ position: 'absolute', top: 16, right: 16 }}>
-        <ModeToggle />
-      </div>
+    <div className="auth-page">
       <div className="auth-wrap">
         <div className="auth-form-col">{children}</div>
 
@@ -29,18 +32,14 @@ export default function AuthLayout({ children }) {
             <div className="blip" style={{ top: '40%', left: '18%', animationDelay: '1.6s' }} />
           </div>
 
-          <div style={{ display: 'grid', gap: 9 }}>
-            {[
-              'AI coach powered by Claude',
-              'Streak and momentum analytics',
-              'Shareable accountability links',
-            ].map((f) => (
-              <div
-                key={f}
-                className="mono"
-                style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--mut)' }}
-              >
-                <span className="led" style={{ width: 5, height: 5 }} />{f}
+          <div style={{ display: 'grid', gap: 8 }}>
+            {FEATURES.map((f) => (
+              <div key={f.title} className="feat-row">
+                <span className="feat-ic"><f.Icon size={14} /></span>
+                <span>
+                  <span className="feat-t">{f.title}</span>
+                  <span className="feat-s">{f.sub}</span>
+                </span>
               </div>
             ))}
           </div>

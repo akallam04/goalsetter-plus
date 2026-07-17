@@ -15,6 +15,8 @@ Two ways in, no signup needed:
 The v2 interface is a custom "mission control" design system built from scratch in plain CSS:
 
 - Dark and light modes with four accent themes (Ice by default, plus Lime, Amber, Coral), all driven by CSS custom properties and color-mix
+- Animated day/night pill switch and a conic pie accent picker, both hand-built in plain CSS
+- Guided feature tour on first visit: five spotlight steps covering goals, tracking, analytics, the AI coach, and sharing, replayable from the help button
 - Flash-free theming: an inline head script applies the saved mode and accent before first paint, persisted in localStorage across refreshes
 - Graphite surfaces with hairline borders and a single signal color
 - Space Grotesk for UI, JetBrains Mono for data readouts (tabular numerals throughout)

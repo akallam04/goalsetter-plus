@@ -1,47 +1,39 @@
 import { useState } from 'react'
-import { ACCENTS, applyTheme, readTheme } from '../lib/theme'
-import { IconMoon, IconSun } from './icons'
+import AccentPie from './AccentPie'
+import { applyTheme, readTheme } from '../lib/theme'
+import { IconCloud, IconMoon, IconSun } from './icons'
 
-// Sun/moon button: shows the mode you will switch to
-export function ModeToggle() {
+// Animated day/night pill switch: sky with a cloud in light mode,
+// starfield in dark, with a sliding sun/moon thumb.
+export function ThemeSwitch() {
   const [mode, setMode] = useState(() => readTheme().mode)
-  const next = mode === 'dark' ? 'light' : 'dark'
+  const dark = mode === 'dark'
+
   return (
     <button
-      className="icon-btn"
-      onClick={() => setMode(applyTheme({ mode: next }).mode)}
-      aria-label={`Switch to ${next} mode`}
-      title={`Switch to ${next} mode`}
+      type="button"
+      className={`tswitch${dark ? ' is-dark' : ''}`}
+      role="switch"
+      aria-checked={dark}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      onClick={() => setMode(applyTheme({ mode: dark ? 'light' : 'dark' }).mode)}
     >
-      {mode === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
+      <span className="tsw-cloud"><IconCloud size={13} /></span>
+      <span className="tsw-stars"><i /><i /><i /></span>
+      <span className="tsw-thumb">
+        <span className="tsw-sun"><IconSun size={13} /></span>
+        <span className="tsw-moon"><IconMoon size={12} /></span>
+      </span>
     </button>
-  )
-}
-
-export function AccentDots({ className = '' }) {
-  const [accent, setAccent] = useState(() => readTheme().accent)
-  return (
-    <div className={`acc-dots ${className}`.trim()} role="radiogroup" aria-label="Accent color">
-      {ACCENTS.map((a) => (
-        <button
-          key={a.id}
-          role="radio"
-          aria-checked={accent === a.id}
-          aria-label={`${a.label} accent`}
-          title={a.label}
-          className={`acc-dot a-${a.id}${accent === a.id ? ' on' : ''}`}
-          onClick={() => setAccent(applyTheme({ accent: a.id }).accent)}
-        />
-      ))}
-    </div>
   )
 }
 
 export default function ThemeControls() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <AccentDots className="topbar-dots" />
-      <ModeToggle />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span className="topbar-pie"><AccentPie /></span>
+      <ThemeSwitch />
     </div>
   )
 }

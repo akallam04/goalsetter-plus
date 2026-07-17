@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import axios from 'axios'
 import ProgressRing from '../components/ProgressRing'
-import { ModeToggle } from '../components/ThemeControls'
+import { ThemeSwitch } from '../components/ThemeControls'
 import { IconTarget } from '../components/icons'
 import { formatDate } from '../lib/dates'
 
@@ -40,9 +40,9 @@ export default function SharedView() {
               <span>Goalsetter<span className="plus">+</span></span>
             </div>
           </Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span className="chip">READ ONLY</span>
-            <ModeToggle />
+            <ThemeSwitch />
           </div>
         </div>
 

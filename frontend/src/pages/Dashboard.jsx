@@ -15,8 +15,9 @@ import ShareTab from '../components/ShareTab'
 import ProfileModal from '../components/ProfileModal'
 import ProgressRing from '../components/ProgressRing'
 import ThemeControls from '../components/ThemeControls'
+import FeatureTour from '../components/FeatureTour'
 import {
-  IconChart, IconFlame, IconLink, IconLogout, IconPlus,
+  IconChart, IconFlame, IconHelp, IconLink, IconLogout, IconPlus,
   IconSearch, IconSpark, IconTarget, IconX,
 } from '../components/icons'
 
@@ -84,6 +85,7 @@ export default function Dashboard() {
   const [editing, setEditing] = useState(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [tourOpen, setTourOpen] = useState(false)
 
   const titleInputRef = useRef(null)
   const searchInputRef = useRef(null)
@@ -118,6 +120,24 @@ export default function Dashboard() {
     clearTimeout(toastTimer.current)
     setToast({ msg, type })
     toastTimer.current = setTimeout(() => setToast(null), 2800)
+  }, [])
+
+  /* First-visit feature tour: runs once per browser, replayable via the help button */
+  useEffect(() => {
+    if (listStatus === 'succeeded' && !localStorage.getItem('gs-tour-done')) {
+      const t = setTimeout(() => setTourOpen(true), 700)
+      return () => clearTimeout(t)
+    }
+  }, [listStatus])
+
+  const startTour = () => {
+    setActiveTab('goals')
+    setTourOpen(true)
+  }
+
+  const closeTour = useCallback(() => {
+    setTourOpen(false)
+    localStorage.setItem('gs-tour-done', '1')
   }, [])
 
   /* Keyboard: N = new goal, / = search, Esc = close sheet */
@@ -268,6 +288,9 @@ export default function Dashboard() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button className="icon-btn" onClick={startTour} aria-label="Feature tour" title="Feature tour">
+              <IconHelp size={16} />
+            </button>
             <ThemeControls />
             <Clock />
             <button
@@ -323,6 +346,7 @@ export default function Dashboard() {
           {TABS.map((t) => (
             <button
               key={t.id}
+              data-tour={`tab-${t.id}`}
               className={`seg-btn${activeTab === t.id ? ' active' : ''}`}
               onClick={() => switchTab(t.id)}
             >
@@ -340,7 +364,7 @@ export default function Dashboard() {
           {activeTab === 'goals' && (
             <div className="pane goals-grid">
               {/* New goal: desktop panel */}
-              <div className="panel panel-tick desktop-only gform-panel">
+              <div className="panel panel-tick desktop-only gform-panel" data-tour="new-goal">
                 <div className="panel-head" style={{ marginBottom: 14 }}>
                   <div>
                     <div className="mono-label" style={{ marginBottom: 3 }}>New entry</div>
@@ -357,7 +381,7 @@ export default function Dashboard() {
               </div>
 
               {/* Goal list */}
-              <div className="panel glist-panel">
+              <div className="panel glist-panel" data-tour="goal-list">
                 {stats.overdue > 0 && filter !== 'active' && (
                   <button
                     className="alert-strip"
@@ -471,7 +495,7 @@ export default function Dashboard() {
 
       {/* Mobile: FAB + bottom nav */}
       {activeTab === 'goals' && (
-        <button className="fab" onClick={() => setSheetOpen(true)} aria-label="New goal">
+        <button className="fab" data-tour="fab" onClick={() => setSheetOpen(true)} aria-label="New goal">
           <IconPlus size={24} />
         </button>
       )}
@@ -480,6 +504,7 @@ export default function Dashboard() {
         {TABS.map((t) => (
           <button
             key={t.id}
+            data-tour={`tab-${t.id}`}
             className={`bnav-btn${activeTab === t.id ? ' active' : ''}`}
             onClick={() => switchTab(t.id)}
           >
@@ -531,6 +556,9 @@ export default function Dashboard() {
           onToast={showToast}
         />
       )}
+
+      {/* Feature tour */}
+      {tourOpen && <FeatureTour onDone={closeTour} />}
 
       {/* Toast */}
       {toast && (

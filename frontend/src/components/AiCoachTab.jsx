@@ -3,8 +3,8 @@ import { useDispatch } from 'react-redux'
 import client from '../api/client'
 import { createGoal } from '../features/goals/goalsSlice'
 import ClaudeMark from './ClaudeMark'
-import Gyro from './Gyro'
-import { IconCheck, IconPlus, IconSpark } from './icons'
+import ClaudeSpin from './ClaudeSpin'
+import { IconCheck, IconPlus } from './icons'
 
 const QUICK_PROMPTS = [
   'Get fit in 90 days',
@@ -62,8 +62,8 @@ export default function AiCoachTab({ onToast }) {
           <div className="panel-head" style={{ marginBottom: 6 }}>
             <div>
               <div className="mono-label" style={{ marginBottom: 3, color: 'var(--claude)' }}>Powered by Claude</div>
-              <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <IconSpark size={17} style={{ color: 'var(--claude)' }} /> AI Coach
+              <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <ClaudeSpin size={19} /> AI Coach
               </div>
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function AiCoachTab({ onToast }) {
 
       {loading && (
         <div className="scanbox scanbox-claude" style={{ marginTop: 16 }}>
-          <Gyro size={34} />
+          <ClaudeSpin size={30} />
           CLAUDE IS THINKING<span className="cursor-blink">_</span>
         </div>
       )}

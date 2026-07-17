@@ -176,3 +176,17 @@ export const IconMoon = (p) => (
     <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" />
   </Icon>
 )
+
+export const IconCloud = (p) => (
+  <Icon {...p}>
+    <path d="M6.5 19a4.5 4.5 0 0 1-.4-9A6 6 0 0 1 17.8 8.7 4.2 4.2 0 0 1 17.5 19h-11z" />
+  </Icon>
+)
+
+export const IconHelp = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.2 9a2.9 2.9 0 0 1 5.6 1c0 1.8-2.8 2.2-2.8 4" />
+    <circle cx="12" cy="17.3" r="0.6" fill="currentColor" stroke="none" />
+  </Icon>
+)
