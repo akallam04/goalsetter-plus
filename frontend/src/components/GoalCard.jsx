@@ -30,7 +30,7 @@ function GoalCard({ goal, onToggle, onEdit, onDelete, onToggleSubtask }) {
   }, [menuOpen])
 
   return (
-    <li className={`gc${done ? ' is-done' : ''}${goal.pending ? ' is-pending' : ''}${overdue ? ' is-overdue' : ''}`}>
+    <li className={`gc${done ? ' is-done' : ''}${goal.pending ? ' is-pending' : ''}${overdue ? ' is-overdue' : ''}${menuOpen ? ' is-menu-open' : ''}`}>
       <button
         className="gc-check"
         onClick={onToggle}

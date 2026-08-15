@@ -69,11 +69,22 @@ export const formatTime = (value) => {
   return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
+// A goal carries a time when the server says so, or when the stored
+// hour is not the noon we write for date-only goals. The fallback keeps
+// older rows and older server builds working.
+export const goalHasTime = (goal) => {
+  if (!goal?.dueDate) return false
+  if (goal.hasTime === true) return true
+  const d = new Date(goal.dueDate)
+  if (Number.isNaN(d.getTime())) return false
+  return !(d.getHours() === 12 && d.getMinutes() === 0)
+}
+
 // "Due today at 1:00 PM", "2 days late", "Due Sep 4"
 export const dueSentence = (goal) => {
   const base = duePhrase(goal)
   if (!base) return null
-  if (!goal.hasTime) return base
+  if (!goalHasTime(goal)) return base
   const t = formatTime(goal.dueDate)
   if (!t) return base
   return base.startsWith('Due') ? `${base} at ${t}` : `${base}, was due ${t}`

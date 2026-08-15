@@ -2306,3 +2306,35 @@ body::after {
 @media (max-width: 860px) {
   .auth-form-col { padding: var(--s6) var(--s5); }
 }
+
+/* A card with its menu open must paint above the cards below it,
+   otherwise later siblings clip the popup */
+.gc.is-menu-open { z-index: 25; }
+.menu-pop { max-width: calc(100vw - 24px); }
+@media (max-width: 480px) {
+  .menu-pop { right: 0; left: auto; }
+}
+
+/* Manual date and time beside the quick presets */
+.qa-when { display: flex; align-items: center; gap: var(--s1); }
+.qa-date, .qa-time {
+  width: auto;
+  padding: 6px 10px;
+  font-size: var(--fs-1);
+  font-family: var(--font-mono);
+  background: var(--panel-2);
+}
+.qa-time { min-width: 92px; }
+.qa-date:disabled, .qa-time:disabled { opacity: 0.45; }
+.qa-clear {
+  padding: 6px 10px;
+  font-size: var(--fs-1);
+  color: var(--dim);
+  border-color: transparent;
+}
+.qa-clear:hover { color: var(--red); border-color: var(--red-bd); background: var(--red-bg); }
+@media (max-width: 860px) {
+  .qa-when { width: 100%; }
+  .qa-date, .qa-time { flex: 1; min-height: 44px; font-size: 16px; }
+  .qa-clear { min-height: 44px; }
+}

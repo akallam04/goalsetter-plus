@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 const TIP_W = 320
 const TIP_H = 175
@@ -44,26 +44,39 @@ const findTarget = (selectors) => {
 
 // Lightweight spotlight tour: dims the app with a cutout around the
 // current target and anchors an explainer card next to it.
-export default function FeatureTour({ onDone }) {
+export default function FeatureTour({ onDone, onNavigate }) {
   const [idx, setIdx] = useState(0)
   const [rect, setRect] = useState(null)
-  const rafRef = useRef(0)
 
+  // Measured synchronously: requestAnimationFrame is paused while a tab
+  // is hidden, which would leave the spotlight unpositioned
   const measure = useCallback(() => {
-    cancelAnimationFrame(rafRef.current)
-    rafRef.current = requestAnimationFrame(() => {
-      setRect(findTarget(STEPS[idx].targets))
+    const next = findTarget(STEPS[idx].targets)
+    setRect((prev) => {
+      if (prev && next && prev.top === next.top && prev.left === next.left
+        && prev.width === next.width && prev.height === next.height) return prev
+      return next
     })
   }, [idx])
 
+  // Steps one and two point at the Today screen, so make sure we are on it
   useEffect(() => {
-    measure()
+    onNavigate?.('today')
+  }, [onNavigate])
+
+  useEffect(() => {
+    // The target may arrive a frame or two late, for example right after
+    // the tour switches views, so measure on the next tick and keep
+    // re-measuring while the tour is open
+    const first = setTimeout(measure, 0)
+    const poll = setInterval(measure, 250)
     window.addEventListener('resize', measure)
     window.addEventListener('scroll', measure, true)
     return () => {
+      clearTimeout(first)
+      clearInterval(poll)
       window.removeEventListener('resize', measure)
       window.removeEventListener('scroll', measure, true)
-      cancelAnimationFrame(rafRef.current)
     }
   }, [measure])
 

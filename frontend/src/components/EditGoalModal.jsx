@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { toTimeInput } from '../lib/dates'
+import { goalHasTime, toTimeInput } from '../lib/dates'
 import { IconPlus, IconX } from './icons'
 
 // Owns its draft state, initialized once from the goal being edited.
@@ -11,7 +11,7 @@ export default function EditGoalModal({ goal, onClose, onSave }) {
   const [priority, setPriority] = useState(goal.priority || 'medium')
   const [status, setStatus] = useState(goal.status || 'active')
   const [dueDate, setDueDate] = useState(goal.dueDate ? String(goal.dueDate).slice(0, 10) : '')
-  const [dueTime, setDueTime] = useState(goal.hasTime ? toTimeInput(goal.dueDate) : '')
+  const [dueTime, setDueTime] = useState(goalHasTime(goal) ? toTimeInput(goal.dueDate) : '')
   const [notes, setNotes] = useState(goal.notes || '')
   const [subtasks, setSubtasks] = useState(goal.subtasks ? goal.subtasks.map((s) => ({ ...s })) : [])
   const [newSubtask, setNewSubtask] = useState('')

@@ -340,7 +340,7 @@ export default function Dashboard() {
           onSignOut={() => dispatch(logout())}
         />
       )}
-      {tourOpen && <FeatureTour onDone={closeTour} />}
+      {tourOpen && <FeatureTour onDone={closeTour} onNavigate={setView} />}
     </div>
   )
 }

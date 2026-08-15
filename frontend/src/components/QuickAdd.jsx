@@ -2,51 +2,57 @@ import { useState } from 'react'
 import parseGoalText from '../lib/parseGoalText'
 import { IconPlus } from './icons'
 
-const DUE_PRESETS = [
+const PRESETS = [
   { id: 'today', label: 'Today', days: 0 },
   { id: 'tomorrow', label: 'Tomorrow', days: 1 },
   { id: 'week', label: 'In a week', days: 7 },
 ]
 
-const atNoon = (days) => {
+const isoDay = (days) => {
   const d = new Date()
   d.setDate(d.getDate() + days)
-  d.setHours(12, 0, 0, 0)
-  return d
+  return d.toLocaleDateString('en-CA')
 }
 
-const stamp = (d, withTime) =>
-  d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
-  (withTime ? ` at ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}` : '')
-
-// One line, one Enter. Say when in plain words and it is understood.
+/**
+ * Two ways to say when, and neither gets in the other's way:
+ * type it in the sentence, or set the date and time yourself. Picking
+ * anything manually leaves the title exactly as written.
+ */
 export default function QuickAdd({ onCreate, busy }) {
   const [text, setText] = useState('')
-  const [preset, setPreset] = useState(null)
+  const [date, setDate] = useState('')
+  const [time, setTime] = useState('')
   const [priority, setPriority] = useState('medium')
 
   const parsed = parseGoalText(text)
-  const usingPreset = preset !== null
-  const shownDate = usingPreset ? atNoon(preset) : parsed.date
-  const shownHasTime = usingPreset ? false : parsed.hasTime
+  const manual = !!date
+
+  const finalDate = manual
+    ? new Date(`${date}T${time || '12:00'}:00`)
+    : parsed.date
+  const finalHasTime = manual ? !!time : parsed.hasTime
+  const finalTitle = manual ? text.trim() : parsed.title
 
   const submit = (e) => {
     e.preventDefault()
     if (!text.trim()) return
-    const payload = {
-      title: usingPreset ? text.trim() : parsed.title,
-      priority,
-      category: 'General',
-    }
-    if (shownDate) {
-      payload.dueDate = shownDate.toISOString()
-      payload.hasTime = shownHasTime
+    const payload = { title: finalTitle, priority, category: 'General' }
+    if (finalDate) {
+      payload.dueDate = finalDate.toISOString()
+      payload.hasTime = finalHasTime
     }
     onCreate(payload)
     setText('')
-    setPreset(null)
+    setDate('')
+    setTime('')
     setPriority('medium')
   }
+
+  const stamp = finalDate
+    ? finalDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+      (finalHasTime ? ` at ${finalDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}` : '')
+    : null
 
   return (
     <form className="qa" onSubmit={submit} data-tour="quick-add">
@@ -55,7 +61,7 @@ export default function QuickAdd({ onCreate, busy }) {
           className="qa-input"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Add a goal. Try: submit essay friday 9am"
+          placeholder="Add a goal. Type it plainly, or say when: submit essay friday 9am"
           aria-label="New goal"
           maxLength={140}
         />
@@ -65,19 +71,49 @@ export default function QuickAdd({ onCreate, busy }) {
       </div>
 
       <div className="qa-opts">
-        <div className="qa-group" role="group" aria-label="Due date">
-          {DUE_PRESETS.map((p) => (
+        <div className="qa-group" role="group" aria-label="Quick due date">
+          {PRESETS.map((p) => (
             <button
               key={p.id}
               type="button"
-              className={`qa-chip${preset === p.days ? ' is-on' : ''}`}
-              aria-pressed={preset === p.days}
-              onClick={() => setPreset(preset === p.days ? null : p.days)}
+              className={`qa-chip${date === isoDay(p.days) ? ' is-on' : ''}`}
+              aria-pressed={date === isoDay(p.days)}
+              onClick={() => setDate(date === isoDay(p.days) ? '' : isoDay(p.days))}
             >
               {p.label}
             </button>
           ))}
         </div>
+
+        <div className="qa-when">
+          <input
+            type="date"
+            className="qa-date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            aria-label="Due date"
+          />
+          <input
+            type="time"
+            className="qa-time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            disabled={!date}
+            aria-label="Due time"
+            title={date ? 'Time of day' : 'Pick a date first'}
+          />
+          {(date || time) && (
+            <button
+              type="button"
+              className="qa-clear"
+              onClick={() => { setDate(''); setTime('') }}
+              aria-label="Clear date and time"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
         <div className="qa-group" role="group" aria-label="Priority">
           {['low', 'medium', 'high'].map((p) => (
             <button
@@ -92,10 +128,10 @@ export default function QuickAdd({ onCreate, busy }) {
           ))}
         </div>
 
-        {shownDate && (
+        {stamp && (
           <span className="qa-hint">
-            {shownHasTime ? 'Date and time set: ' : 'Date set: '}{stamp(shownDate, shownHasTime)}
-            {!usingPreset && parsed.title !== text.trim() && <>, title becomes &ldquo;{parsed.title}&rdquo;</>}
+            Due {stamp}
+            {!manual && finalTitle !== text.trim() && <>, saved as &ldquo;{finalTitle}&rdquo;</>}
           </span>
         )}
       </div>
