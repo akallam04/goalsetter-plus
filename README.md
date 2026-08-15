@@ -19,9 +19,9 @@ The v2 interface is a custom "mission control" design system built from scratch 
 - Flash-free theming: an inline head script applies the saved mode before first paint, persisted in localStorage across refreshes
 - Graphite surfaces with hairline borders and one signal color, on a 7-step type scale and a 4px spacing scale
 - Space Grotesk for UI, JetBrains Mono for data readouts (tabular numerals throughout)
-- Custom SVG icon set, status LEDs, corner-tick panels, an animated radar on the auth pages
+- Custom SVG icon set, status LEDs, corner-tick panels, and a sign-in screen built around a still of the real Today view
 - 3D ambience: perspective horizon grid, CSS 3D gyroscope ornament, cursor-tracking spotlight
-- Claude mascot: a floating coral starburst toy on the AI Coach tab, with matching coral accents for everything Claude generates
+- Claude companion: an animated coral pixel sprite in the AI Coach, with matching coral accents for everything Claude generates
 - Desktop is a two column workspace: a readable focus column beside a sticky momentum sidebar, under a sticky header and tab bar
 - No chart library: the area chart, contribution heatmap, and progress rings are hand-built SVG
 - Mobile first: thumb-reachable bottom navigation, a menu sheet instead of a crowded top bar, safe-area insets, no horizontal overflow, and no tap target under 44px
@@ -111,7 +111,7 @@ PUT    /api/users/me       Update profile (name, email, avatar, password)
 ```
 GET    /api/goals            List goals (filterable by status, category, priority)
 POST   /api/goals            Create goal
-PUT    /api/goals/:id        Update goal (title, category, priority, status, dueDate, subtasks, notes)
+PUT    /api/goals/:id        Update goal (title, category, priority, status, dueDate, hasTime, subtasks, notes)
 DELETE /api/goals/:id        Delete goal
 GET    /api/goals/stats      Total / active / completed / overdue counts
 GET    /api/goals/analytics  Completions by day plus category breakdown
@@ -119,7 +119,7 @@ GET    /api/goals/analytics  Completions by day plus category breakdown
 
 **AI** (protected, rate limited)
 ```
-POST   /api/ai/suggest-goals   Generate 3 SMART goal suggestions from a plain-English intent
+POST   /api/ai/suggest-goals   Generate SMART goals from a plain-English intent (count, exclude)
 ```
 
 **Share**
