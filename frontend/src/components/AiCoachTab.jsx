@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import client from '../api/client'
+import friendlyError from '../lib/apiError'
 import { createGoal } from '../features/goals/goalsSlice'
 import ClaudeMark from './ClaudeMark'
 import ClaudeSpin from './ClaudeSpin'
@@ -32,7 +33,7 @@ export default function AiCoachTab({ onToast }) {
       const { data } = await client.post('/ai/suggest-goals', { intent: query })
       setSuggestions(data)
     } catch (err) {
-      setError(err.response?.data?.message || 'The coach is unavailable right now. Try again.')
+      setError(friendlyError(err, 'The coach is unavailable right now. Try again.'))
     } finally {
       setLoading(false)
     }
@@ -132,19 +133,19 @@ export default function AiCoachTab({ onToast }) {
             return (
               <div
                 key={s.title}
-                className="gcard fade-in"
+                className="gc is-static fade-in"
                 style={{ animationDelay: `${i * 90}ms`, background: 'var(--panel)' }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="gcard-title">{s.title}</div>
-                  {s.description && <div className="gcard-desc">{s.description}</div>}
-                  <div className="gcard-meta">
+                  <div className="gc-title">{s.title}</div>
+                  {s.description && <div className="gc-desc">{s.description}</div>}
+                  <div className="gc-meta">
                     <span className={`chip chip-${s.priority}`}><span className="dot" />{s.priority}</span>
                     <span className="chip">{s.category}</span>
                     {s.suggestedDueDays && <span className="chip chip-acc">{s.suggestedDueDays}D RUNWAY</span>}
                   </div>
                 </div>
-                <div className="gcard-actions">
+                <div className="gc-actions">
                   {isAdded ? (
                     <span className="chip chip-acc" style={{ alignSelf: 'center' }}>
                       <IconCheck size={11} /> ADDED

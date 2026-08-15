@@ -15,7 +15,7 @@ const revokeShareToken = async (req, res) => {
   res.json({ message: 'Share link revoked' })
 }
 
-// GET /api/share/:token  (PUBLIC — no auth middleware)
+// GET /api/share/:token  (PUBLIC, no auth middleware)
 const getSharedGoals = async (req, res) => {
   const user = await User.findOne({ shareToken: req.params.token }).select('name')
 

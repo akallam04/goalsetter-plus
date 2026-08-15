@@ -140,7 +140,7 @@ const getGoalAnalytics = async (req, res) => {
   since.setDate(since.getDate() - days)
   since.setHours(0, 0, 0, 0)
 
-  // Completions per day — use completedAt (accurate) with MST timezone grouping
+  // Completions per day, using completedAt with MST timezone grouping
   const completionsByDay = await Goal.aggregate([
     {
       $match: {

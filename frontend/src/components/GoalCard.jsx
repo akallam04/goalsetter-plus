@@ -1,86 +1,124 @@
-import { memo } from 'react'
-import { formatDate, isOverdue, dueLabel } from '../lib/dates'
-import { IconCheck, IconPencil, IconTrash, IconUndo, IconX } from './icons'
+import { memo, useEffect, useRef, useState } from 'react'
+import { duePhrase, formatDate, isOverdue } from '../lib/dates'
+import { IconCheck, IconPencil, IconTrash, IconUndo } from './icons'
+import { IconChevron, IconMore } from './icons2'
 
-function GoalCard({ goal, confirmingDelete, justDone, onEdit, onToggle, onAskDelete, onCancelDelete, onConfirmDelete }) {
+// One goal. The primary daily action (complete) is a single large target;
+// everything rarer lives behind the overflow menu so the row stays short.
+function GoalCard({ goal, onToggle, onEdit, onDelete, onToggleSubtask }) {
+  const [subsOpen, setSubsOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const menuRef = useRef(null)
+
   const done = goal.status === 'completed'
   const overdue = isOverdue(goal)
-  const countdown = dueLabel(goal)
+  const phrase = duePhrase(goal)
   const subs = goal.subtasks || []
   const subsDone = subs.filter((s) => s.completed).length
 
-  return (
-    <div
-      className={[
-        'gcard',
-        `p-${goal.priority}`,
-        done ? 'done' : '',
-        justDone ? 'just-done' : '',
-        'fade-in',
-      ].filter(Boolean).join(' ')}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="gcard-title">{goal.title}</div>
-        {goal.description && <div className="gcard-desc">{goal.description}</div>}
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) { setMenuOpen(false); setConfirming(false) } }
+    const onKey = (e) => { if (e.key === 'Escape') { setMenuOpen(false); setConfirming(false) } }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [menuOpen])
 
-        <div className="gcard-meta">
-          <span className={`chip chip-${goal.priority}`}>
-            <span className="dot" />{goal.priority}
+  return (
+    <li className={`gc${done ? ' is-done' : ''}${goal.pending ? ' is-pending' : ''}${overdue ? ' is-overdue' : ''}`}>
+      <button
+        className="gc-check"
+        onClick={onToggle}
+        aria-pressed={done}
+        aria-label={done ? `Reopen ${goal.title}` : `Mark ${goal.title} complete`}
+      >
+        {done ? <IconUndo size={16} /> : <IconCheck size={17} />}
+      </button>
+
+      <div className="gc-body">
+        <p className="gc-title">{goal.title}</p>
+        {goal.description && <p className="gc-desc">{goal.description}</p>}
+
+        <div className="gc-meta">
+          <span className={`prio prio-${goal.priority}`} title={`${goal.priority} priority`}>
+            <span className="prio-dot" />{goal.priority}
           </span>
-          <span className="chip">{goal.category}</span>
-          {goal.dueDate && (
-            <span className={`chip ${overdue ? 'chip-overdue' : ''}`}>
-              {formatDate(goal.dueDate)}
-            </span>
+          <span className="gc-cat">{goal.category}</span>
+          {phrase && !done && (
+            <span className={`gc-due${overdue ? ' is-late' : ''}`}>{phrase}</span>
           )}
-          {!done && countdown && (
-            <span className={`chip ${overdue ? 'chip-overdue' : countdown === 'due today' ? 'chip-medium' : 'chip-acc'}`}>
-              {countdown}
-            </span>
+          {done && goal.completedAt && (
+            <span className="gc-due">Done {formatDate(goal.completedAt)}</span>
           )}
-          {done && <span className="chip chip-done">archived</span>}
         </div>
 
         {subs.length > 0 && (
-          <div className="sub-progress">
-            <div className="track">
-              <div className="fill" style={{ width: `${(subsDone / subs.length) * 100}%` }} />
-            </div>
-            <span className="txt">{subsDone}/{subs.length} SUBTASKS</span>
-          </div>
+          <>
+            <button
+              className="gc-subs-toggle"
+              onClick={() => setSubsOpen((v) => !v)}
+              aria-expanded={subsOpen}
+            >
+              <span className="gc-bar" aria-hidden="true">
+                <span className="gc-bar-fill" style={{ width: `${(subsDone / subs.length) * 100}%` }} />
+              </span>
+              <span className="gc-subs-count">{subsDone}/{subs.length} steps</span>
+              <IconChevron size={13} className={subsOpen ? 'flip' : ''} />
+            </button>
+
+            {subsOpen && (
+              <ul className="gc-subs">
+                {subs.map((s, i) => (
+                  <li key={s._id || i}>
+                    <label className="gc-sub">
+                      <input
+                        type="checkbox"
+                        checked={!!s.completed}
+                        onChange={() => onToggleSubtask(i)}
+                      />
+                      <span className={s.completed ? 'is-checked' : ''}>{s.text}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </div>
 
-      <div className="gcard-actions">
-        {confirmingDelete ? (
-          <>
-            <button className="btn-danger" style={{ padding: '7px 13px', fontSize: 12 }} onClick={onConfirmDelete}>
-              Delete
+      <div className="gc-menu" ref={menuRef}>
+        <button
+          className="gc-menu-btn"
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          aria-label={`Actions for ${goal.title}`}
+        >
+          <IconMore size={16} />
+        </button>
+        {menuOpen && (
+          <div className="menu-pop" role="menu">
+            <button role="menuitem" onClick={() => { setMenuOpen(false); onEdit() }}>
+              <IconPencil size={14} /> Edit details
             </button>
-            <button className="icon-btn" onClick={onCancelDelete} aria-label="Cancel delete">
-              <IconX />
-            </button>
-          </>
-        ) : (
-          <>
-            <button className="icon-btn" onClick={onEdit} aria-label="Edit goal" title="Edit">
-              <IconPencil />
-            </button>
-            <button
-              className="icon-btn acc"
-              onClick={onToggle}
-              aria-label={done ? 'Reopen goal' : 'Mark complete'}
-              title={done ? 'Reopen' : 'Mark complete'}
-            >
-              {done ? <IconUndo /> : <IconCheck />}
-            </button>
-            <button className="icon-btn danger" onClick={onAskDelete} aria-label="Delete goal" title="Delete">
-              <IconTrash />
-            </button>
-          </>
+            {confirming ? (
+              <button role="menuitem" className="is-danger" onClick={() => { setMenuOpen(false); setConfirming(false); onDelete() }}>
+                <IconTrash size={14} /> Tap again to delete
+              </button>
+            ) : (
+              <button role="menuitem" className="is-danger" onClick={() => setConfirming(true)}>
+                <IconTrash size={14} /> Delete
+              </button>
+            )}
+          </div>
         )}
       </div>
-    </div>
+    </li>
   )
 }
 

@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import client from '../../api/client'
+import friendlyError from '../../lib/apiError'
 
 const saved = localStorage.getItem('auth')
 const initialAuth = saved ? JSON.parse(saved) : { user: null, token: null }
@@ -9,7 +10,7 @@ export const register = createAsyncThunk('auth/register', async (payload, thunkA
     const { data } = await client.post('/users', payload)
     return data
   } catch (err) {
-    return thunkAPI.rejectWithValue(err.response?.data?.message || err.message)
+    return thunkAPI.rejectWithValue(friendlyError(err))
   }
 })
 
@@ -18,7 +19,7 @@ export const login = createAsyncThunk('auth/login', async (payload, thunkAPI) =>
     const { data } = await client.post('/users/login', payload)
     return data
   } catch (err) {
-    return thunkAPI.rejectWithValue(err.response?.data?.message || err.message)
+    return thunkAPI.rejectWithValue(friendlyError(err))
   }
 })
 
@@ -27,7 +28,7 @@ export const updateProfile = createAsyncThunk('auth/updateProfile', async (paylo
     const { data } = await client.put('/users/me', payload)
     return data
   } catch (err) {
-    return thunkAPI.rejectWithValue(err.response?.data?.message || err.message)
+    return thunkAPI.rejectWithValue(friendlyError(err))
   }
 })
 

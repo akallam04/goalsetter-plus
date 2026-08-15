@@ -101,21 +101,21 @@ export default function SharedView() {
                     const subs = g.subtasks || []
                     const subsDone = subs.filter((s) => s.completed).length
                     return (
-                      <div key={g._id} className={`gcard p-${g.priority}`}>
+                      <div key={g._id} className="gc is-static">
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div className="gcard-title">{g.title}</div>
-                          {g.description && <div className="gcard-desc">{g.description}</div>}
-                          <div className="gcard-meta">
+                          <div className="gc-title">{g.title}</div>
+                          {g.description && <div className="gc-desc">{g.description}</div>}
+                          <div className="gc-meta">
                             <span className={`chip chip-${g.priority}`}><span className="dot" />{g.priority}</span>
                             <span className="chip">{g.category}</span>
                             {g.dueDate && <span className="chip">{formatDate(g.dueDate)}</span>}
                           </div>
                           {subs.length > 0 && (
-                            <div className="sub-progress">
-                              <div className="track">
-                                <div className="fill" style={{ width: `${(subsDone / subs.length) * 100}%` }} />
-                              </div>
-                              <span className="txt">{subsDone}/{subs.length} SUBTASKS</span>
+                            <div className="gc-subs-toggle" style={{ pointerEvents: 'none' }}>
+                              <span className="gc-bar">
+                                <span className="gc-bar-fill" style={{ width: `${(subsDone / subs.length) * 100}%` }} />
+                              </span>
+                              <span className="gc-subs-count">{subsDone}/{subs.length} steps</span>
                             </div>
                           )}
                         </div>
@@ -134,10 +134,10 @@ export default function SharedView() {
                 </div>
                 <div style={{ display: 'grid', gap: 9 }}>
                   {completed.map((g) => (
-                    <div key={g._id} className="gcard p-low done">
+                    <div key={g._id} className="gc is-static is-done">
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="gcard-title">{g.title}</div>
-                        <div className="gcard-meta">
+                        <div className="gc-title">{g.title}</div>
+                        <div className="gc-meta">
                           <span className="chip chip-done">done</span>
                           <span className="chip">{g.category}</span>
                         </div>

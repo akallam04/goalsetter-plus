@@ -10,7 +10,7 @@ const router = express.Router()
 const aiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 15,
-  message: { message: 'Too many AI requests — try again in 15 minutes.' },
+  message: { message: 'Too many AI requests. Try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
 })

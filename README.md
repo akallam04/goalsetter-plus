@@ -14,11 +14,10 @@ Two ways in, no signup needed:
 
 The v2 interface is a custom "mission control" design system built from scratch in plain CSS:
 
-- Dark and light modes with four accent themes (Ice by default, plus Lime, Amber, Coral), all driven by CSS custom properties and color-mix
-- Animated day/night pill switch and a conic pie accent picker, both hand-built in plain CSS
+- Two themes, dark and light, driven by CSS custom properties, with an animated day/night switch hand-built in plain CSS
 - Guided feature tour on first visit: five spotlight steps covering goals, tracking, analytics, the AI coach, and sharing, replayable from the help button
 - Flash-free theming: an inline head script applies the saved mode and accent before first paint, persisted in localStorage across refreshes
-- Graphite surfaces with hairline borders and a single signal color
+- Graphite surfaces with hairline borders and one signal color, on a 7-step type scale and a 4px spacing scale
 - Space Grotesk for UI, JetBrains Mono for data readouts (tabular numerals throughout)
 - Custom SVG icon set, status LEDs, corner-tick panels, an animated radar on the auth pages
 - 3D ambience: perspective horizon grid, CSS 3D gyroscope ornament, cursor-tracking spotlight
@@ -37,12 +36,20 @@ The v2 interface is a custom "mission control" design system built from scratch 
 - Natural language date input: type "next friday" or "in 2 weeks" and it locks in automatically
 - Keyboard shortcuts: N focuses the new-goal form, / jumps to search
 
-### Dashboard
-- Telemetry strip: Total / Active / Done / Overdue, completion ring, and current day streak
-- Smart sort (default): overdue first, then due soonest, then by priority; completed goals sink
-- Attention strip surfaces overdue goals with one tap to review
-- Live clock and date readout in the header
-- Instant stat updates computed from local state, no extra round-trips
+### Today (home)
+- Answers one question: what needs you now. Overdue, due today, and the next few days, in that order
+- Momentum sidebar with the current streak and a 6-week completion chain
+- One-line quick add: type it, press Enter. "gym tomorrow" sets the date and cleans the title
+- Sub-tasks tick inline on the card, no modal
+- Optimistic writes: the UI moves in about 30ms and rolls back with a plain-English message if the server refuses
+
+### Board
+- Every goal with filters, search, and smart ordering (overdue first, then due soonest, then priority)
+
+### Resilience
+- Designed error, empty, offline, and cold-start states, all with a way out
+- A failed load says so and offers retry instead of rendering an empty board
+- Internal server and SDK messages are never shown to the user
 
 ### Analytics
 - GitHub-style completion heatmap covering the last 13 weeks

@@ -6,29 +6,29 @@ const GAP = 14
 
 const STEPS = [
   {
-    targets: ['[data-tour="new-goal"]', '[data-tour="fab"]'],
-    title: 'Set a goal',
-    body: 'Type an objective, pick a priority, and set a target date. Natural language works too: "next friday" or "in 2 weeks" locks in automatically.',
+    targets: ['[data-tour="quick-add"]'],
+    title: 'Add a goal in one line',
+    body: 'Type it and press Enter. Say "gym tomorrow" and the date is picked up for you, or tap a date chip.',
   },
   {
-    targets: ['[data-tour="goal-list"]'],
-    title: 'Track everything here',
-    body: 'Complete, edit, or break goals into subtasks. Smart sort keeps overdue and due-soon work on top, with search and filters alongside.',
+    targets: ['[data-tour="focus"]'],
+    title: 'Today is the whole point',
+    body: 'Overdue and due-today work sits at the top. Tap the circle to complete something, or open the steps inside a goal to tick them off.',
   },
   {
-    targets: ['[data-tour="tab-analytics"]'],
-    title: 'Watch your momentum',
-    body: 'A 13-week completion heatmap, streak counter, and trend charts show how consistent you really are.',
+    targets: ['[data-tour="tab-progress"]'],
+    title: 'Watch the chain grow',
+    body: 'A 13-week heatmap, streaks, and momentum trends show how consistent you have actually been.',
   },
   {
-    targets: ['[data-tour="tab-ai"]'],
-    title: 'Ask the AI Coach',
-    body: 'Claude turns a plain-English intent like "get healthier" into three SMART goals you can add to your board in one tap.',
+    targets: ['[data-tour="tab-coach"]'],
+    title: 'Ask the AI coach',
+    body: 'Claude turns a vague intent like "get healthier" into three specific goals you can add in one tap.',
   },
   {
     targets: ['[data-tour="tab-share"]'],
-    title: 'Share your board',
-    body: 'Generate a public read-only link for accountability partners or your portfolio. Revoke it anytime.',
+    title: 'Share your progress',
+    body: 'Generate a public read-only link for an accountability partner. Revoke it whenever you want.',
   },
 ]
 

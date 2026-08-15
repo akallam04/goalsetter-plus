@@ -1,31 +1,18 @@
-// Theme state lives on <html> as data attributes, set before first paint
-// by the inline script in index.html and persisted to localStorage here.
+// Two themes, nothing else to configure. The mode is applied before first
+// paint by the inline script in index.html and persisted here.
 const KEY = 'gs-theme'
 
-export const ACCENTS = [
-  { id: 'ice', label: 'Ice' },
-  { id: 'lime', label: 'Lime' },
-  { id: 'amber', label: 'Amber' },
-  { id: 'coral', label: 'Coral' },
-]
+export const readTheme = () => ({
+  mode: document.documentElement.dataset.theme === 'light' ? 'light' : 'dark',
+})
 
-export const readTheme = () => {
-  const ds = document.documentElement.dataset
-  return {
-    mode: ds.theme === 'light' ? 'light' : 'dark',
-    accent: ACCENTS.some((a) => a.id === ds.accent) ? ds.accent : 'ice',
-  }
-}
-
-export const applyTheme = (patch) => {
-  const next = { ...readTheme(), ...patch }
-  const root = document.documentElement
-  root.dataset.theme = next.mode
-  root.dataset.accent = next.accent
+export const applyTheme = ({ mode }) => {
+  const next = mode === 'light' ? 'light' : 'dark'
+  document.documentElement.dataset.theme = next
   try {
-    localStorage.setItem(KEY, JSON.stringify(next))
+    localStorage.setItem(KEY, JSON.stringify({ mode: next }))
   } catch { /* storage unavailable: theme still applies for this session */ }
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.content = next.mode === 'light' ? '#f1f2ee' : '#07090c'
-  return next
+  if (meta) meta.content = next === 'light' ? '#f1f2ee' : '#07090c'
+  return { mode: next }
 }

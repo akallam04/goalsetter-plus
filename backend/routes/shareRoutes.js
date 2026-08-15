@@ -4,7 +4,7 @@ import { protect } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 
-// Public — no auth
+// Public, no auth
 router.get('/:token', getSharedGoals)
 
 // Protected
