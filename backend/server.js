@@ -50,6 +50,18 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, env: process.env.NODE_ENV || 'development' })
 })
 
+// Which build is actually running. Render injects the commit and branch,
+// so a stale deploy is one request away from being obvious.
+const startedAt = new Date().toISOString()
+app.get('/api/version', (req, res) => {
+  res.json({
+    commit: (process.env.RENDER_GIT_COMMIT || 'local').slice(0, 7),
+    branch: process.env.RENDER_GIT_BRANCH || 'unknown',
+    env: process.env.NODE_ENV || 'development',
+    startedAt,
+  })
+})
+
 app.use('/api/users', userRoutes)
 app.use('/api/goals', goalRoutes)
 app.use('/api/ai', aiRoutes)
