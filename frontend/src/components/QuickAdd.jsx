@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import * as chrono from 'chrono-node'
+import parseGoalText from '../lib/parseGoalText'
 import { IconPlus } from './icons'
 
 const DUE_PRESETS = [
@@ -8,37 +8,43 @@ const DUE_PRESETS = [
   { id: 'week', label: 'In a week', days: 7 },
 ]
 
-const isoAt = (days) => {
+const atNoon = (days) => {
   const d = new Date()
   d.setDate(d.getDate() + days)
-  return `${d.toLocaleDateString('en-CA')}T12:00:00`
+  d.setHours(12, 0, 0, 0)
+  return d
 }
 
-// One line, one Enter. Adding a goal is the action that must never feel
-// like filling in a form.
+const stamp = (d, withTime) =>
+  d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+  (withTime ? ` at ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}` : '')
+
+// One line, one Enter. Say when in plain words and it is understood.
 export default function QuickAdd({ onCreate, busy }) {
-  const [title, setTitle] = useState('')
-  const [due, setDue] = useState(null)
+  const [text, setText] = useState('')
+  const [preset, setPreset] = useState(null)
   const [priority, setPriority] = useState('medium')
 
-  const parsed = chrono.parse(title, new Date(), { forwardDate: true })[0]
+  const parsed = parseGoalText(text)
+  const usingPreset = preset !== null
+  const shownDate = usingPreset ? atNoon(preset) : parsed.date
+  const shownHasTime = usingPreset ? false : parsed.hasTime
 
   const submit = (e) => {
     e.preventDefault()
-    const text = title.trim()
-    if (!text) return
-
-    // "gym tomorrow" sets the date and keeps the title clean
-    let cleanTitle = text
-    let dueDate = due !== null ? isoAt(due) : null
-    if (parsed && due === null) {
-      dueDate = `${parsed.start.date().toLocaleDateString('en-CA')}T12:00:00`
-      cleanTitle = text.replace(parsed.text, '').replace(/\s{2,}/g, ' ').trim() || text
+    if (!text.trim()) return
+    const payload = {
+      title: usingPreset ? text.trim() : parsed.title,
+      priority,
+      category: 'General',
     }
-
-    onCreate({ title: cleanTitle, priority, category: 'General', ...(dueDate ? { dueDate } : {}) })
-    setTitle('')
-    setDue(null)
+    if (shownDate) {
+      payload.dueDate = shownDate.toISOString()
+      payload.hasTime = shownHasTime
+    }
+    onCreate(payload)
+    setText('')
+    setPreset(null)
     setPriority('medium')
   }
 
@@ -47,13 +53,13 @@ export default function QuickAdd({ onCreate, busy }) {
       <div className="qa-row">
         <input
           className="qa-input"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="What do you want to get done?"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Add a goal. Try: submit essay friday 9am"
           aria-label="New goal"
-          maxLength={120}
+          maxLength={140}
         />
-        <button type="submit" className="btn-primary qa-btn" disabled={busy || !title.trim()}>
+        <button type="submit" className="btn-primary qa-btn" disabled={busy || !text.trim()}>
           <IconPlus size={16} /> <span className="qa-btn-txt">Add</span>
         </button>
       </div>
@@ -64,9 +70,9 @@ export default function QuickAdd({ onCreate, busy }) {
             <button
               key={p.id}
               type="button"
-              className={`qa-chip${due === p.days ? ' is-on' : ''}`}
-              aria-pressed={due === p.days}
-              onClick={() => setDue(due === p.days ? null : p.days)}
+              className={`qa-chip${preset === p.days ? ' is-on' : ''}`}
+              aria-pressed={preset === p.days}
+              onClick={() => setPreset(preset === p.days ? null : p.days)}
             >
               {p.label}
             </button>
@@ -85,8 +91,12 @@ export default function QuickAdd({ onCreate, busy }) {
             </button>
           ))}
         </div>
-        {parsed && due === null && (
-          <span className="qa-hint">Date detected: {parsed.start.date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+
+        {shownDate && (
+          <span className="qa-hint">
+            {shownHasTime ? 'Date and time set: ' : 'Date set: '}{stamp(shownDate, shownHasTime)}
+            {!usingPreset && parsed.title !== text.trim() && <>, title becomes &ldquo;{parsed.title}&rdquo;</>}
+          </span>
         )}
       </div>
     </form>

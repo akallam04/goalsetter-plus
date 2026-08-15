@@ -3,6 +3,8 @@ import mongoose from 'mongoose'
 const subtaskSchema = new mongoose.Schema({
   text:      { type: String, required: true, trim: true, maxlength: 200 },
   completed: { type: Boolean, default: false },
+  // Optional 24h "HH:MM", for things like a workout slot
+  time:      { type: String, default: '', trim: true, maxlength: 5 },
 })
 
 const goalSchema = new mongoose.Schema(
@@ -22,6 +24,8 @@ const goalSchema = new mongoose.Schema(
       default: 'active',
     },
     dueDate:     { type: Date, default: null },
+    // True when the user picked an actual time, not just a day
+    hasTime:     { type: Boolean, default: false },
     completedAt: { type: Date, default: null },
     subtasks: { type: [subtaskSchema], default: [] },
     notes:    { type: String, default: '', trim: true, maxlength: 5000 },

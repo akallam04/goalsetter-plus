@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react'
-import { duePhrase, formatDate, isOverdue } from '../lib/dates'
+import { dueSentence, formatDate, isOverdue, prettyClock } from '../lib/dates'
 import { IconCheck, IconPencil, IconTrash, IconUndo } from './icons'
 import { IconChevron, IconMore } from './icons2'
 
@@ -13,7 +13,7 @@ function GoalCard({ goal, onToggle, onEdit, onDelete, onToggleSubtask }) {
 
   const done = goal.status === 'completed'
   const overdue = isOverdue(goal)
-  const phrase = duePhrase(goal)
+  const phrase = dueSentence(goal)
   const subs = goal.subtasks || []
   const subsDone = subs.filter((s) => s.completed).length
 
@@ -82,6 +82,7 @@ function GoalCard({ goal, onToggle, onEdit, onDelete, onToggleSubtask }) {
                         onChange={() => onToggleSubtask(i)}
                       />
                       <span className={s.completed ? 'is-checked' : ''}>{s.text}</span>
+                      {s.time && <span className="gc-sub-time">{prettyClock(s.time)}</span>}
                     </label>
                   </li>
                 ))}

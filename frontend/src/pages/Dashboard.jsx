@@ -38,11 +38,22 @@ function BrandMark({ size = 22 }) {
   )
 }
 
-const greeting = () => {
-  const h = new Date().getHours()
+const greetingFor = (h) => {
+  if (h < 5) return 'Still up'
   if (h < 12) return 'Good morning'
-  if (h < 18) return 'Good afternoon'
-  return 'Good evening'
+  if (h < 17) return 'Good afternoon'
+  if (h < 21) return 'Good evening'
+  return 'Winding down'
+}
+
+// Re-reads the clock every minute so the greeting is never stale
+function useGreeting() {
+  const [greeting, setGreeting] = useState(() => greetingFor(new Date().getHours()))
+  useEffect(() => {
+    const id = setInterval(() => setGreeting(greetingFor(new Date().getHours())), 60000)
+    return () => clearInterval(id)
+  }, [])
+  return greeting
 }
 
 export default function Dashboard() {
@@ -58,6 +69,7 @@ export default function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [tourOpen, setTourOpen] = useState(false)
   const [toast, setToast] = useState(null)
+  const greeting = useGreeting()
   const [online, setOnline] = useState(() => navigator.onLine)
   const [waking, setWaking] = useState(false)
 
@@ -105,15 +117,20 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
-    if (listStatus === 'succeeded' && !localStorage.getItem('gs-tour-done')) {
-      const t = setTimeout(() => setTourOpen(true), 700)
-      return () => clearTimeout(t)
-    }
-  }, [listStatus])
+    if (listStatus !== 'succeeded') return undefined
+    const isDemo = user?.email === 'demo@goalsetter.app'
+    const seenThisSession = sessionStorage.getItem('gs-tour-session')
+    const seenEver = localStorage.getItem('gs-tour-done')
+    const shouldRun = isDemo ? !seenThisSession : !seenEver
+    if (!shouldRun) return undefined
+    const t = setTimeout(() => setTourOpen(true), 800)
+    return () => clearTimeout(t)
+  }, [listStatus, user])
 
   const closeTour = useCallback(() => {
     setTourOpen(false)
     localStorage.setItem('gs-tour-done', '1')
+    sessionStorage.setItem('gs-tour-session', '1')
   }, [])
 
   /* Shortcuts: N to add, / to search */
@@ -200,22 +217,25 @@ export default function Dashboard() {
             <h1 className="brand-h1">Goalsetter<span className="plus">+</span></h1>
           </div>
 
-          <p className="greet">
-            {greeting()}{firstName ? `, ${firstName}` : ''}.{' '}
-            <span className="greet-sub">
+          <div className="greet">
+            <p className="greet-line">
+              {greeting}{firstName ? `, ${firstName}` : ''}
+            </p>
+            <p className="greet-sub">
               {listStatus === 'failed'
-                ? 'Your goals are not loaded yet.'
+                ? 'Goals not loaded'
                 : listStatus !== 'succeeded'
-                  ? 'Loading your board.'
+                  ? 'Loading your board'
                   : focusCount > 0
-                    ? `${focusCount} ${focusCount === 1 ? 'goal needs' : 'goals need'} you today.`
-                    : 'Nothing overdue. Keep the chain going.'}
-            </span>
-          </p>
+                    ? <><span className="greet-count">{focusCount}</span> {focusCount === 1 ? 'goal needs you today' : 'goals need you today'}</>
+                    : 'You are clear today'}
+            </p>
+          </div>
 
           <div className="header-actions desktop-only">
-            <button className="icon-btn" onClick={() => setTourOpen(true)} aria-label="Show me around" title="Show me around">
+            <button className="tour-btn" onClick={() => setTourOpen(true)} title="Take the guided tour">
               <IconHelp size={17} />
+              <span>Tour</span>
             </button>
             <ThemeSwitch />
             <button

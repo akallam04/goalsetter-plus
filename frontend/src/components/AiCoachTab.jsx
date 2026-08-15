@@ -3,8 +3,9 @@ import { useDispatch } from 'react-redux'
 import client from '../api/client'
 import friendlyError from '../lib/apiError'
 import { createGoal } from '../features/goals/goalsSlice'
-import ClaudeMark from './ClaudeMark'
+import ClaudePixel from './ClaudePixel'
 import ClaudeSpin from './ClaudeSpin'
+import { prettyClock } from '../lib/dates'
 import { IconCheck, IconPlus } from './icons'
 
 const QUICK_PROMPTS = [
@@ -21,6 +22,7 @@ export default function AiCoachTab({ onToast }) {
   const [suggestions, setSuggestions] = useState([])
   const [error, setError] = useState(null)
   const [added, setAdded] = useState([])
+  const [loadingMore, setLoadingMore] = useState(false)
 
   const run = async (text) => {
     const query = (text ?? intent).trim()
@@ -39,12 +41,36 @@ export default function AiCoachTab({ onToast }) {
     }
   }
 
+  // Ask for more without losing what is already on screen, and tell the
+  // model what it already gave you so it does not repeat itself.
+  const more = async () => {
+    if (!intent.trim() || loadingMore) return
+    setLoadingMore(true)
+    setError(null)
+    try {
+      const { data } = await client.post('/ai/suggest-goals', {
+        intent: intent.trim(),
+        count: 3,
+        exclude: suggestions.map((s) => s.title),
+      })
+      const fresh = data.filter((d) => !suggestions.some((s) => s.title === d.title))
+      setSuggestions((prev) => [...prev, ...fresh])
+    } catch (err) {
+      setError(friendlyError(err, 'Could not fetch more ideas. Try again.'))
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
   const addSuggestion = async (s) => {
     const payload = {
       title: s.title,
       description: s.description,
       category: s.category,
       priority: s.priority,
+      subtasks: Array.isArray(s.steps)
+        ? s.steps.slice(0, 4).map((st) => ({ text: String(st.text).slice(0, 200), completed: false, time: st.time || '' }))
+        : [],
     }
     if (s.suggestedDueDays) {
       const due = new Date()
@@ -107,9 +133,29 @@ export default function AiCoachTab({ onToast }) {
         </div>
 
         <div className="desktop-only" style={{ paddingRight: 18, paddingTop: 6 }}>
-          <ClaudeMark size={140} />
+          <ClaudePixel size={120} />
         </div>
       </div>
+
+      {suggestions.length === 0 && !loading && !error && (
+        <ol className="how">
+          <li>
+            <span className="how-n">1</span>
+            <strong>Describe the outcome</strong>
+            <span>Plain English is enough. "Get fit in 90 days" works.</span>
+          </li>
+          <li>
+            <span className="how-n">2</span>
+            <strong>Claude drafts the goals</strong>
+            <span>Each one is specific and measurable, broken into steps with sensible timings.</span>
+          </li>
+          <li>
+            <span className="how-n">3</span>
+            <strong>Keep what fits</strong>
+            <span>Add the ones you like in one tap, then edit the timings to suit your day.</span>
+          </li>
+        </ol>
+      )}
 
       {loading && (
         <div className="scanbox scanbox-claude" style={{ marginTop: 16 }}>
@@ -142,8 +188,18 @@ export default function AiCoachTab({ onToast }) {
                   <div className="gc-meta">
                     <span className={`chip chip-${s.priority}`}><span className="dot" />{s.priority}</span>
                     <span className="chip">{s.category}</span>
-                    {s.suggestedDueDays && <span className="chip chip-acc">{s.suggestedDueDays}D RUNWAY</span>}
+                    {s.suggestedDueDays && <span className="chip chip-acc">{s.suggestedDueDays} day runway</span>}
                   </div>
+                  {Array.isArray(s.steps) && s.steps.length > 0 && (
+                    <ul className="sug-steps">
+                      {s.steps.slice(0, 4).map((st, k) => (
+                        <li key={k} className="sug-step">
+                          {st.text}
+                          {st.time && <time>{prettyClock(st.time)}</time>}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
                 <div className="gc-actions">
                   {isAdded ? (
@@ -159,6 +215,14 @@ export default function AiCoachTab({ onToast }) {
               </div>
             )
           })}
+
+          <button
+            className="show-more"
+            onClick={more}
+            disabled={loadingMore}
+          >
+            {loadingMore ? 'Asking Claude for more...' : 'Show me more ideas'}
+          </button>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toTimeInput } from '../lib/dates'
 import { IconPlus, IconX } from './icons'
 
 // Owns its draft state, initialized once from the goal being edited.
@@ -10,6 +11,7 @@ export default function EditGoalModal({ goal, onClose, onSave }) {
   const [priority, setPriority] = useState(goal.priority || 'medium')
   const [status, setStatus] = useState(goal.status || 'active')
   const [dueDate, setDueDate] = useState(goal.dueDate ? String(goal.dueDate).slice(0, 10) : '')
+  const [dueTime, setDueTime] = useState(goal.hasTime ? toTimeInput(goal.dueDate) : '')
   const [notes, setNotes] = useState(goal.notes || '')
   const [subtasks, setSubtasks] = useState(goal.subtasks ? goal.subtasks.map((s) => ({ ...s })) : [])
   const [newSubtask, setNewSubtask] = useState('')
@@ -22,7 +24,7 @@ export default function EditGoalModal({ goal, onClose, onSave }) {
 
   const addSubtask = () => {
     if (!newSubtask.trim()) return
-    setSubtasks((prev) => [...prev, { localId: Date.now(), text: newSubtask.trim(), completed: false }])
+    setSubtasks((prev) => [...prev, { localId: Date.now(), text: newSubtask.trim(), completed: false, time: '' }])
     setNewSubtask('')
   }
 
@@ -36,8 +38,9 @@ export default function EditGoalModal({ goal, onClose, onSave }) {
       priority,
       status,
       notes,
-      subtasks: subtasks.map((s) => ({ _id: s._id, text: s.text, completed: s.completed })),
-      dueDate: dueDate ? `${dueDate}T12:00:00` : null,
+      subtasks: subtasks.map((s) => ({ _id: s._id, text: s.text, completed: s.completed, time: s.time || '' })),
+      dueDate: dueDate ? new Date(`${dueDate}T${dueTime || '12:00'}:00`).toISOString() : null,
+      hasTime: !!(dueDate && dueTime),
     })
   }
 
@@ -86,10 +89,20 @@ export default function EditGoalModal({ goal, onClose, onSave }) {
             </div>
           </div>
 
-          <div className="form-grid-2">
+          <div className="form-grid-3">
             <div>
               <label className="label">Target date</label>
               <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Time (optional)</label>
+              <input
+                type="time"
+                value={dueTime}
+                onChange={(e) => setDueTime(e.target.value)}
+                disabled={!dueDate}
+                title={dueDate ? 'Set a time of day' : 'Pick a date first'}
+              />
             </div>
             <div>
               <label className="label">Status</label>
@@ -101,7 +114,7 @@ export default function EditGoalModal({ goal, onClose, onSave }) {
           </div>
 
           <div>
-            <label className="label">Subtasks</label>
+            <label className="label">Steps and timings</label>
             <div style={{ display: 'grid', gap: 6, marginBottom: 8 }}>
               {subtasks.map((s, i) => (
                 <div
@@ -127,6 +140,13 @@ export default function EditGoalModal({ goal, onClose, onSave }) {
                   >
                     {s.text}
                   </span>
+                  <input
+                    type="time"
+                    className="sub-time-input"
+                    value={s.time || ''}
+                    onChange={(e) => setSubtasks((prev) => prev.map((t, j) => (j === i ? { ...t, time: e.target.value } : t)))}
+                    aria-label={`Time for ${s.text}`}
+                  />
                   <button
                     type="button"
                     className="icon-btn"
@@ -144,7 +164,7 @@ export default function EditGoalModal({ goal, onClose, onSave }) {
                 value={newSubtask}
                 onChange={(e) => setNewSubtask(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSubtask() } }}
-                placeholder="Break it into a step, press Enter"
+                placeholder="Add a step, for example Warm up. Press Enter"
                 maxLength={200}
               />
               <button type="button" className="icon-btn" style={{ flexShrink: 0, alignSelf: 'center' }} onClick={addSubtask} aria-label="Add subtask">
@@ -165,7 +185,7 @@ export default function EditGoalModal({ goal, onClose, onSave }) {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
-            <button type="button" style={{ fontSize: 12.5 }} onClick={() => setDueDate('')}>
+            <button type="button" style={{ fontSize: 12.5 }} onClick={() => { setDueDate(''); setDueTime('') }}>
               Clear date
             </button>
             <button type="submit" className="btn-primary" style={{ padding: '11px 26px' }}>

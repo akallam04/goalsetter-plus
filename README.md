@@ -14,8 +14,8 @@ Two ways in, no signup needed:
 
 The v2 interface is a custom "mission control" design system built from scratch in plain CSS:
 
-- Two themes, dark and light, driven by CSS custom properties, with an animated day/night switch hand-built in plain CSS
-- Guided feature tour on first visit: five spotlight steps covering goals, tracking, analytics, the AI coach, and sharing, replayable from the help button
+- Two themes, dark and light, on one muted teal accent chosen to sit calmly on both a near-black and an off-white background, with an animated day/night switch hand-built in plain CSS
+- Guided tour that runs itself for the demo account and for new sign ups, replayable anytime from the labelled Tour button
 - Flash-free theming: an inline head script applies the saved mode before first paint, persisted in localStorage across refreshes
 - Graphite surfaces with hairline borders and one signal color, on a 7-step type scale and a 4px spacing scale
 - Space Grotesk for UI, JetBrains Mono for data readouts (tabular numerals throughout)
@@ -33,7 +33,8 @@ The v2 interface is a custom "mission control" design system built from scratch 
 - Profile editing: name, email, password change, and a profile photo uploaded from your device (resized client-side to a compact data URL)
 - Full goals CRUD with status toggle, sub-tasks, notes, and priorities
 - Due dates with overdue detection and plain-English timing ("Due today", "19 days late")
-- Natural language date input: type "next friday" or "in 2 weeks" and it locks in automatically
+- Natural language dates and times: "submit essay sept 4th by 1pm" sets the date and the time and leaves a clean title behind
+- Times on goals and on individual steps, so a workout or a study block can carry its own slot
 - Keyboard shortcuts: N focuses the new-goal form, / jumps to search
 
 ### Today (home)
@@ -61,7 +62,8 @@ The v2 interface is a custom "mission control" design system built from scratch 
 ### AI Coach (Claude API)
 - Describe an intent in plain English; Claude Haiku returns 3 SMART goals
 - Claude-branded experience: coral mascot, "Claude is thinking" scanner, generated-by-Claude tags
-- Quick-prompt chips for one-tap inspiration
+- Quick-prompt chips for one-tap inspiration, plus Show more ideas when three is not enough
+- Suggestions arrive with steps and suggested timings that carry across when you add them
 - One tap adds any suggestion to your board with a computed due date
 - Rate limited server-side to control API cost
 

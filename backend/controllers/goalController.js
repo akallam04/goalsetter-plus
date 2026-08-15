@@ -43,7 +43,7 @@ const createGoal = async (req, res) => {
     throw new Error(errors.array().map((e) => e.msg).join(', '))
   }
 
-  const { title, description, category, priority, status, dueDate } = req.body
+  const { title, description, category, priority, status, dueDate, hasTime, subtasks } = req.body
 
   const goal = await Goal.create({
     user: req.user._id,
@@ -53,6 +53,8 @@ const createGoal = async (req, res) => {
     priority,
     status,
     dueDate: dueDate || null,
+    hasTime: !!hasTime,
+    subtasks: Array.isArray(subtasks) ? subtasks : [],
   })
 
   res.status(201).json(goal)
@@ -79,7 +81,7 @@ const updateGoal = async (req, res) => {
     throw new Error('Goal not found')
   }
 
-  const fields = ['title', 'description', 'category', 'priority', 'status', 'dueDate', 'subtasks', 'notes']
+  const fields = ['title', 'description', 'category', 'priority', 'status', 'dueDate', 'hasTime', 'subtasks', 'notes']
   fields.forEach((field) => {
     if (req.body[field] !== undefined) goal[field] = req.body[field]
   })
