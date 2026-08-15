@@ -16,15 +16,15 @@ The v2 interface is a custom "mission control" design system built from scratch 
 
 - Two themes, dark and light, driven by CSS custom properties, with an animated day/night switch hand-built in plain CSS
 - Guided feature tour on first visit: five spotlight steps covering goals, tracking, analytics, the AI coach, and sharing, replayable from the help button
-- Flash-free theming: an inline head script applies the saved mode and accent before first paint, persisted in localStorage across refreshes
+- Flash-free theming: an inline head script applies the saved mode before first paint, persisted in localStorage across refreshes
 - Graphite surfaces with hairline borders and one signal color, on a 7-step type scale and a 4px spacing scale
 - Space Grotesk for UI, JetBrains Mono for data readouts (tabular numerals throughout)
 - Custom SVG icon set, status LEDs, corner-tick panels, an animated radar on the auth pages
 - 3D ambience: perspective horizon grid, CSS 3D gyroscope ornament, cursor-tracking spotlight
 - Claude mascot: a floating coral starburst toy on the AI Coach tab, with matching coral accents for everything Claude generates
-- Desktop app frame: header, telemetry, and tabs stay fixed while only the content pane scrolls
+- Desktop is a two column workspace: a readable focus column beside a sticky momentum sidebar, under a sticky header and tab bar
 - No chart library: the area chart, contribution heatmap, and progress rings are hand-built SVG
-- Fully responsive: bottom tab navigation, floating action button, and bottom-sheet forms on mobile, with safe-area insets and 44px touch targets
+- Mobile first: thumb-reachable bottom navigation, a menu sheet instead of a crowded top bar, safe-area insets, no horizontal overflow, and no tap target under 44px
 
 ## Features
 
@@ -32,7 +32,7 @@ The v2 interface is a custom "mission control" design system built from scratch 
 - JWT authentication: register, login, protected routes, auto-logout on token expiry
 - Profile editing: name, email, password change, and a profile photo uploaded from your device (resized client-side to a compact data URL)
 - Full goals CRUD with status toggle, sub-tasks, notes, and priorities
-- Due dates with overdue detection and countdown chips ("3d left", "due today")
+- Due dates with overdue detection and plain-English timing ("Due today", "19 days late")
 - Natural language date input: type "next friday" or "in 2 weeks" and it locks in automatically
 - Keyboard shortcuts: N focuses the new-goal form, / jumps to search
 
